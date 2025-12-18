@@ -1,9 +1,9 @@
-
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight, CheckCircle2, Map as MapIcon, Shield, ChevronLeft, ChevronRight, Play, Navigation } from 'lucide-react';
 import { generateHeroImage } from '../services/geminiService';
 import { COUNTRIES_DATA } from '../constants';
+import SEO from '../components/SEO';
 
 const features = [
   { 
@@ -82,8 +82,13 @@ const Home: React.FC = () => {
 
   return (
     <div className="flex flex-col">
+      <SEO 
+        title="Global Visa Portal - Instant Visa Requirements & Eligibility"
+        description="Find visa requirements for any country instantly. We simplify the complex world of travel documentation for tourism, work, and student visas."
+      />
+      
       {/* Hero Section */}
-      <section className="relative bg-slate-900 overflow-hidden">
+      <section className="relative bg-slate-900 overflow-hidden" aria-label="Hero Section">
         <div className="absolute inset-0 bg-gradient-to-br from-indigo-900/40 via-slate-900 to-slate-900 z-0" />
         
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 py-24 md:py-32 grid md:grid-cols-2 gap-12 items-center">
@@ -98,6 +103,7 @@ const Home: React.FC = () => {
               <Link 
                 to="/service" 
                 className="inline-flex items-center justify-center px-8 py-4 border border-transparent text-base font-bold rounded-full text-white bg-indigo-600 hover:bg-indigo-500 transition-all shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 hover:-translate-y-1"
+                aria-label="Start Visa Assessment"
               >
                 Start Assessment
                 <ArrowRight className="ml-2 h-5 w-5" />
@@ -114,7 +120,7 @@ const Home: React.FC = () => {
                 ) : (
                   <img 
                     src={heroImage || ""} 
-                    alt="Abstract Future Travel" 
+                    alt="Abstract Future Travel Visualization" 
                     className="object-cover w-full h-full transform transition-transform duration-1000 group-hover:scale-105"
                   />
                 )}
@@ -128,7 +134,7 @@ const Home: React.FC = () => {
       </section>
 
       {/* Video Background Section */}
-      <section className="relative h-[600px] w-full overflow-hidden flex items-center justify-center bg-slate-900">
+      <section className="relative h-[600px] w-full overflow-hidden flex items-center justify-center bg-slate-900" aria-label="Introduction Video">
         <div className="absolute inset-0 w-full h-full">
             <video 
               autoPlay 
@@ -157,7 +163,7 @@ const Home: React.FC = () => {
       </section>
 
       {/* Interactive Map Section */}
-      <section className="py-24 bg-slate-900 border-t border-slate-800 relative overflow-hidden">
+      <section className="py-24 bg-slate-900 border-t border-slate-800 relative overflow-hidden" aria-label="Interactive Map">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-indigo-900/20 to-slate-900 pointer-events-none"></div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center mb-16">
@@ -171,7 +177,7 @@ const Home: React.FC = () => {
             {/* Map Background */}
             <img 
               src="https://upload.wikimedia.org/wikipedia/commons/e/ec/World_map_blank_without_borders.svg" 
-              alt="World Map" 
+              alt="World Map Interface" 
               className="absolute inset-0 w-full h-full object-cover opacity-30 invert brightness-50 contrast-125"
             />
             
@@ -189,6 +195,7 @@ const Home: React.FC = () => {
                   <button
                     onClick={() => handleCountryClick(key)}
                     className="relative group/point flex items-center justify-center"
+                    aria-label={`View requirements for ${country.name}`}
                   >
                     {/* Pulsing Beacon */}
                     <span className="absolute inline-flex h-4 w-4 rounded-full bg-indigo-400 opacity-75 animate-ping"></span>
@@ -229,7 +236,7 @@ const Home: React.FC = () => {
       </section>
 
       {/* Interactive Carousel Section */}
-      <section className="py-24 bg-white dark:bg-slate-900 transition-colors duration-300 border-t border-slate-100 dark:border-slate-800">
+      <section className="py-24 bg-white dark:bg-slate-900 transition-colors duration-300 border-t border-slate-100 dark:border-slate-800" aria-label="Features">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold text-slate-900 dark:text-white">Why Use Our Portal?</h2>
@@ -246,13 +253,13 @@ const Home: React.FC = () => {
               >
                 {features.map((feature, idx) => (
                    <div key={idx} className="w-full min-w-full h-full flex-shrink-0 flex items-center justify-center p-8 md:p-16">
-                      <div className="flex flex-col items-center text-center max-w-lg group cursor-default">
+                      <article className="flex flex-col items-center text-center max-w-lg group cursor-default">
                         <div className="p-6 bg-indigo-100 dark:bg-indigo-900/50 rounded-2xl mb-8 transition-all duration-300 shadow-inner group-hover:shadow-xl group-hover:bg-indigo-200 dark:group-hover:bg-indigo-800/70 group-hover:-translate-y-2">
-                          <feature.icon className="h-16 w-16 text-indigo-600 dark:text-indigo-400 transition-transform duration-500 ease-out group-hover:rotate-12 group-hover:scale-110" />
+                          <feature.icon className="h-16 w-16 text-indigo-600 dark:text-indigo-400 transition-transform duration-500 ease-out group-hover:rotate-12 group-hover:scale-110" aria-hidden="true" />
                         </div>
                         <h3 className="text-3xl font-bold text-slate-900 dark:text-white mb-4 transition-colors group-hover:text-indigo-600 dark:group-hover:text-indigo-400">{feature.title}</h3>
                         <p className="text-lg text-slate-600 dark:text-slate-300 leading-relaxed">{feature.desc}</p>
-                      </div>
+                      </article>
                    </div>
                 ))}
               </div>

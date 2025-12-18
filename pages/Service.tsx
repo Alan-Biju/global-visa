@@ -3,7 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { COUNTRIES_DATA } from '../constants';
 import { VisaType } from '../types';
-import { ChevronDown, Plane, Briefcase, GraduationCap, ArrowRight, MapPin, Globe } from 'lucide-react';
+import { ChevronDown, Plane, Briefcase, GraduationCap, ArrowRight, MapPin, Globe, Clock, Newspaper, ShieldAlert } from 'lucide-react';
+import SEO from '../components/SEO';
 
 const Service: React.FC = () => {
   const navigate = useNavigate();
@@ -12,14 +13,13 @@ const Service: React.FC = () => {
   // Form State
   const [origin, setOrigin] = useState<string>('');
   const [destination, setDestination] = useState<string>('');
-  const [age, setAge] = useState<string>('');
+  const [visaType, setVisaType] = useState<VisaType | null>(null);
   
   const [selectedOriginName, setSelectedOriginName] = useState<string>('Select Origin');
   const [selectedDestName, setSelectedDestName] = useState<string>('Select Destination');
   
   // Modal State
-  const [activeModal, setActiveModal] = useState<'origin' | 'destination' | null>(null);
-  const [showTypeModal, setShowTypeModal] = useState(false);
+  const [activeModal, setActiveModal] = useState<'origin' | 'destination' | 'type' | null>(null);
 
   // Check for pre-selected destination from Home Map
   useEffect(() => {
@@ -29,28 +29,14 @@ const Service: React.FC = () => {
       if (countryData) {
         setDestination(destKey);
         setSelectedDestName(countryData.name);
-        // If we have a destination but no origin, suggest opening origin modal or just let user click
-        // Setting activeModal('origin') might be too aggressive on load, let user decide.
       }
     }
   }, [location.state]);
-
-  // Validation Check to trigger Type Modal
-  useEffect(() => {
-    if (origin && destination && age && parseInt(age) > 0) {
-      // Small delay for UX smoothness
-      const timer = setTimeout(() => setShowTypeModal(true), 500);
-      return () => clearTimeout(timer);
-    } else {
-      setShowTypeModal(false);
-    }
-  }, [origin, destination, age]);
 
   const handleSelection = (key: string, name: string) => {
     if (activeModal === 'origin') {
         setOrigin(key);
         setSelectedOriginName(name);
-        // Reset destination if it matches origin (optional, keeping simple for now)
     } else if (activeModal === 'destination') {
         setDestination(key);
         setSelectedDestName(name);
@@ -59,21 +45,33 @@ const Service: React.FC = () => {
   };
 
   const handleTypeSelect = (type: VisaType) => {
-    navigate('/details', {
-      state: {
-        originId: origin,
-        originName: selectedOriginName,
-        destinationId: destination,
-        destinationName: selectedDestName,
-        age: parseInt(age),
-        visaType: type
-      }
-    });
+    setVisaType(type);
+    setActiveModal(null);
   };
+
+  const handleSubmit = () => {
+    if (origin && destination && visaType) {
+      navigate(`/details?origin=${origin}&dest=${destination}&type=${visaType}`, {
+        state: {
+          originId: origin,
+          originName: selectedOriginName,
+          destinationId: destination,
+          destinationName: selectedDestName,
+          visaType: visaType
+        }
+      });
+    }
+  };
+
+  const canSubmit = origin && destination && visaType;
 
   return (
     <div className="min-h-screen py-16 px-4 sm:px-6 lg:px-8 bg-slate-50 dark:bg-slate-900 relative overflow-hidden transition-colors duration-300">
-      
+      <SEO 
+        title="Visa Eligibility Assessment - Global Visa Portal" 
+        description="Check your eligibility for Short Term, Long Term, Work Permit, Student, or Journalist visas. Select your origin and destination to get started."
+      />
+
       {/* Background Decor */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
          <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-indigo-500/20 rounded-full blur-[100px] animate-pulse"></div>
@@ -134,32 +132,41 @@ const Service: React.FC = () => {
             </button>
           </div>
 
-          {/* Age Input */}
-          <div className="space-y-3">
-            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Applicant Age</label>
-            <div className="relative">
-                <input
-                type="number"
-                value={age}
-                onChange={(e) => setAge(e.target.value)}
-                placeholder="Enter age"
-                min="0"
-                max="120"
-                disabled={!destination}
-                className="w-full px-6 py-4 border-2 border-slate-200 dark:border-slate-600 rounded-xl focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 dark:focus:border-indigo-400 bg-white dark:bg-slate-700/50 text-slate-900 dark:text-white transition-all outline-none disabled:bg-slate-100 dark:disabled:bg-slate-800 disabled:cursor-not-allowed text-lg font-medium placeholder:text-slate-400"
-                />
-            </div>
+          {/* Visa Type Input */}
+          <div className="space-y-3 group">
+            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Visa Category</label>
+            <button
+              onClick={() => setActiveModal('type')}
+              disabled={!destination}
+              className={`w-full flex justify-between items-center px-6 py-4 border-2 border-slate-200 dark:border-slate-600 rounded-xl text-left text-slate-900 dark:text-white transition-all bg-white dark:bg-slate-700/50 ${!destination ? 'opacity-50 cursor-not-allowed' : 'hover:border-violet-500 dark:hover:border-violet-400 hover:bg-violet-50 dark:hover:bg-slate-700 focus:ring-4 focus:ring-violet-500/20 group-hover:shadow-lg'}`}
+            >
+               <div className="flex items-center gap-4">
+                 <div className={`p-2 rounded-lg ${!destination ? 'bg-slate-100 dark:bg-slate-800 text-slate-400' : 'bg-violet-100 dark:bg-violet-900/50 text-violet-600 dark:text-violet-400'}`}>
+                    {visaType === VisaType.Student ? <GraduationCap className="h-6 w-6" /> : visaType === VisaType.WorkPermit ? <Briefcase className="h-6 w-6" /> : visaType === VisaType.Journalist ? <Newspaper className="h-6 w-6" /> : visaType === VisaType.LongTerm ? <Clock className="h-6 w-6" /> : <Plane className="h-6 w-6" />}
+                 </div>
+                 <span className={`text-lg ${visaType ? 'font-bold' : 'text-slate-400 dark:text-slate-500'}`}>
+                    {visaType || 'Select Visa Type'}
+                 </span>
+               </div>
+              <ChevronDown className="h-6 w-6 text-slate-400 transition-transform group-hover:rotate-180" />
+            </button>
           </div>
           
-          <div className="pt-6 border-t border-slate-200 dark:border-slate-700 flex justify-between items-center text-sm text-slate-500 dark:text-slate-400">
-             <span>* Mandatory Fields</span>
-             <span>Step 1 of 2</span>
+          <div className="pt-6 border-t border-slate-200 dark:border-slate-700">
+             <button
+              onClick={handleSubmit}
+              disabled={!canSubmit}
+              className={`w-full py-5 rounded-2xl text-lg font-black tracking-tight transition-all flex items-center justify-center gap-3 shadow-xl ${canSubmit ? 'bg-indigo-600 hover:bg-indigo-500 text-white hover:-translate-y-1 shadow-indigo-500/40' : 'bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed'}`}
+             >
+                Initialize Search Protocol
+                <ArrowRight className={`h-6 w-6 ${canSubmit ? 'animate-pulse' : ''}`} />
+             </button>
           </div>
         </div>
       </div>
 
-      {/* Country Selection Modal */}
-      {activeModal && (
+      {/* Origin/Destination Selection Modal */}
+      {(activeModal === 'origin' || activeModal === 'destination') && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
           <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-md max-h-[80vh] flex flex-col overflow-hidden border border-slate-200 dark:border-slate-700">
             <div className="p-5 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
@@ -190,68 +197,45 @@ const Service: React.FC = () => {
       )}
 
       {/* Visa Type Selection Modal */}
-      {showTypeModal && (
+      {activeModal === 'type' && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/70 backdrop-blur-md transition-all duration-300">
           <div className="bg-white dark:bg-slate-900 w-full sm:max-w-xl rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom sm:slide-in-from-bottom-10 fade-in duration-300 border border-slate-200 dark:border-slate-700">
             <div className="p-8 text-center border-b border-slate-100 dark:border-slate-800 bg-gradient-to-b from-slate-50 to-white dark:from-slate-800 dark:to-slate-900">
-              <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Select Purpose</h3>
+              <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Select Visa Category</h3>
               <p className="text-slate-500 dark:text-slate-400 text-sm mt-2">
                 Scanning protocols active for route: <br/>
                 <span className="font-bold text-indigo-600 dark:text-indigo-400">{selectedOriginName}</span> <span className="text-slate-300 px-2">➝</span> <span className="font-bold text-pink-600 dark:text-pink-400">{selectedDestName}</span>
               </p>
             </div>
             
-            <div className="p-8 grid gap-4 bg-slate-50 dark:bg-slate-900">
-              <button
-                onClick={() => handleTypeSelect(VisaType.Tourism)}
-                className="flex items-center p-5 bg-white dark:bg-slate-800 border-2 border-transparent hover:border-indigo-500 dark:hover:border-indigo-400 rounded-2xl shadow-sm hover:shadow-xl transition-all group"
-              >
-                <div className="p-4 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-xl group-hover:scale-110 transition-transform">
-                  <Plane className="h-7 w-7" />
-                </div>
-                <div className="ml-5 text-left">
-                  <span className="block text-lg font-bold text-slate-900 dark:text-white">Tourism</span>
-                  <span className="text-sm text-slate-500 dark:text-slate-400">Leisure, Visiting Friends</span>
-                </div>
-                <ArrowRight className="ml-auto h-6 w-6 text-slate-300 dark:text-slate-600 group-hover:text-indigo-500 dark:group-hover:text-indigo-400 group-hover:translate-x-1 transition-all" />
-              </button>
-
-              <button
-                onClick={() => handleTypeSelect(VisaType.Work)}
-                className="flex items-center p-5 bg-white dark:bg-slate-800 border-2 border-transparent hover:border-emerald-500 dark:hover:border-emerald-400 rounded-2xl shadow-sm hover:shadow-xl transition-all group"
-              >
-                <div className="p-4 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-xl group-hover:scale-110 transition-transform">
-                  <Briefcase className="h-7 w-7" />
-                </div>
-                <div className="ml-5 text-left">
-                  <span className="block text-lg font-bold text-slate-900 dark:text-white">Work</span>
-                  <span className="text-sm text-slate-500 dark:text-slate-400">Employment, Long-term</span>
-                </div>
-                <ArrowRight className="ml-auto h-6 w-6 text-slate-300 dark:text-slate-600 group-hover:text-emerald-500 dark:group-hover:text-emerald-400 group-hover:translate-x-1 transition-all" />
-              </button>
-
-              <button
-                onClick={() => handleTypeSelect(VisaType.Student)}
-                className="flex items-center p-5 bg-white dark:bg-slate-800 border-2 border-transparent hover:border-purple-500 dark:hover:border-purple-400 rounded-2xl shadow-sm hover:shadow-xl transition-all group"
-              >
-                <div className="p-4 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-xl group-hover:scale-110 transition-transform">
-                  <GraduationCap className="h-7 w-7" />
-                </div>
-                <div className="ml-5 text-left">
-                  <span className="block text-lg font-bold text-slate-900 dark:text-white">Student</span>
-                  <span className="text-sm text-slate-500 dark:text-slate-400">University, Education</span>
-                </div>
-                <ArrowRight className="ml-auto h-6 w-6 text-slate-300 dark:text-slate-600 group-hover:text-purple-500 dark:group-hover:text-purple-400 group-hover:translate-x-1 transition-all" />
-              </button>
+            <div className="p-8 grid gap-4 bg-slate-50 dark:bg-slate-900 overflow-y-auto max-h-[60vh] no-scrollbar">
+              {[
+                { type: VisaType.ShortTerm, icon: Plane, label: "Short Term Visa", sub: "Tourism, Family, Business (90 Days)", color: "blue" },
+                { type: VisaType.LongTerm, icon: Clock, label: "Long Term Visa", sub: "Residence, Extended Stay", color: "indigo" },
+                { type: VisaType.WorkPermit, icon: Briefcase, label: "Work Permit", sub: "Employment, Specialized Skills", color: "emerald" },
+                { type: VisaType.Student, icon: GraduationCap, label: "Student Visa", sub: "Academic Studies, Research", color: "violet" },
+                { type: VisaType.Journalist, icon: Newspaper, label: "Journalist / Media", sub: "Press & Media Assignments", color: "amber" }
+              ].map((item) => (
+                <button
+                  key={item.type}
+                  onClick={() => handleTypeSelect(item.type)}
+                  className={`flex items-center p-5 bg-white dark:bg-slate-800 border-2 ${visaType === item.type ? 'border-indigo-600' : 'border-transparent'} hover:border-indigo-500 rounded-2xl shadow-sm hover:shadow-xl transition-all group`}
+                >
+                  <div className={`p-4 rounded-xl group-hover:scale-110 transition-transform bg-${item.color}-100 dark:bg-${item.color}-900/30 text-${item.color}-600 dark:text-${item.color}-400`}>
+                    <item.icon className="h-7 w-7" />
+                  </div>
+                  <div className="ml-5 text-left">
+                    <span className="block text-lg font-bold text-slate-900 dark:text-white">{item.label}</span>
+                    <span className="text-sm text-slate-500 dark:text-slate-400">{item.sub}</span>
+                  </div>
+                  <ArrowRight className="ml-auto h-6 w-6 text-slate-300 dark:text-slate-600 group-hover:text-indigo-500 group-hover:translate-x-1 transition-all" />
+                </button>
+              ))}
             </div>
-            
-            <div className="bg-slate-100 dark:bg-slate-950 p-4 text-center">
-              <button 
-                onClick={() => setShowTypeModal(false)}
-                className="text-sm text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 underline font-medium"
-              >
-                Cancel / Modify Inputs
-              </button>
+            <div className="p-4 bg-slate-50 dark:bg-slate-800 border-t border-slate-100 dark:border-slate-700">
+               <button onClick={() => setActiveModal(null)} className="w-full py-3 text-slate-500 dark:text-slate-400 font-bold hover:text-indigo-600 transition-colors">
+                  Cancel
+               </button>
             </div>
           </div>
         </div>

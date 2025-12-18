@@ -3,14 +3,31 @@ import { CountriesData, VisaType } from './types';
 
 export const APP_NAME = "Global Visa Portal";
 
-// Simulating Firestore Data Structure
+const defaultJournalist = {
+  description: "Visa for media professionals and journalists on assignment.",
+  requirements: ["Press Credentials", "Invitation Letter", "Editor's Letter", "Portfolio"],
+  process: ["Accreditation with Ministry of External Affairs", "Embassy Interview", "Standard Verification"],
+  formalities: ["Press pass registration", "Local reporting guidelines"],
+  duration: "3 - 12 Months",
+  cost: "$150 USD"
+};
+
+const defaultLongTerm = {
+  description: "Long-term stay visa for various residential purposes.",
+  requirements: ["Proof of Accommodation", "Bank Statements (12 months)", "Clean Criminal Record", "Health Clearance"],
+  process: ["Initial application at consulate", "Document notarization", "Final approval after background checks"],
+  formalities: ["Local police registration", "Residence permit issuance"],
+  duration: "1 - 5 Years",
+  cost: "$200+ USD"
+};
+
 export const COUNTRIES_DATA: CountriesData = {
   "india": {
      name: "India",
      code: "IN",
      coordinates: { top: 44, left: 69 },
      visa: {
-       [VisaType.Tourism]: {
+       [VisaType.ShortTerm]: {
          description: "Tourist Visa for recreation and sightseeing.",
          requirements: ["Passport (6 months validity)", "Passport Photo", "Return Ticket"],
          process: ["Fill online application", "Submit biometrics", "Receive visa via email/post"],
@@ -18,7 +35,7 @@ export const COUNTRIES_DATA: CountriesData = {
          duration: "30 Days to 5 Years",
          cost: "$25 - $80 USD"
        },
-       [VisaType.Work]: {
+       [VisaType.WorkPermit]: {
          description: "Employment Visa for skilled professionals.",
          requirements: ["Employment Contract", "Company Registration Proof", "Academic Certificates"],
          process: ["Employer files petition", "Applicant visits embassy", "Passport stamping"],
@@ -33,7 +50,9 @@ export const COUNTRIES_DATA: CountriesData = {
          formalities: ["University registration", "Police reporting if stay > 180 days"],
          duration: "Course Duration",
          cost: "$80 USD"
-       }
+       },
+       [VisaType.LongTerm]: defaultLongTerm,
+       [VisaType.Journalist]: defaultJournalist
      }
   },
   "japan": {
@@ -41,7 +60,7 @@ export const COUNTRIES_DATA: CountriesData = {
     code: "JP",
     coordinates: { top: 36, left: 86 },
     visa: {
-      [VisaType.Tourism]: {
+      [VisaType.ShortTerm]: {
         description: "Standard tourist visa for sightseeing and visiting friends.",
         requirements: ["Valid Passport", "Itinerary", "Proof of Funds"],
         process: ["Apply at consulate or VFS", "Wait for processing (5-7 days)", "Collect passport"],
@@ -49,7 +68,7 @@ export const COUNTRIES_DATA: CountriesData = {
         duration: "90 Days",
         cost: "$30 USD"
       },
-      [VisaType.Work]: {
+      [VisaType.WorkPermit]: {
         description: "Visa for highly skilled professionals and specific sectors.",
         requirements: ["COE (Certificate of Eligibility)", "Contract", "Degree"],
         process: ["Employer applies for COE in Japan", "Applicant applies for Visa with COE", "Entry into Japan"],
@@ -64,7 +83,9 @@ export const COUNTRIES_DATA: CountriesData = {
         formalities: ["Work permit application (optional)", "National Health Insurance signup"],
         duration: "6 Months - 2 Years",
         cost: "$40 USD"
-      }
+      },
+      [VisaType.LongTerm]: defaultLongTerm,
+      [VisaType.Journalist]: defaultJournalist
     }
   },
   "germany": {
@@ -72,7 +93,7 @@ export const COUNTRIES_DATA: CountriesData = {
     code: "DE",
     coordinates: { top: 26, left: 51 },
     visa: {
-      [VisaType.Tourism]: {
+      [VisaType.ShortTerm]: {
         description: "Schengen visa for short stays in Germany and EU.",
         requirements: ["Travel Insurance", "Hotel Booking", "Return Ticket"],
         process: ["Book appointment", "Submit documents in person", "Biometrics collection"],
@@ -80,7 +101,7 @@ export const COUNTRIES_DATA: CountriesData = {
         duration: "90 Days within 180 days",
         cost: "€80"
       },
-      [VisaType.Work]: {
+      [VisaType.WorkPermit]: {
         description: "For qualified professionals and Blue Card applicants.",
         requirements: ["Job Offer", "University Degree", "Health Insurance"],
         process: ["ZAV Approval (if needed)", "Embassy Interview", "Visa issuance"],
@@ -95,7 +116,9 @@ export const COUNTRIES_DATA: CountriesData = {
         formalities: ["University enrollment", "Residence permit extension"],
         duration: "Duration of Studies",
         cost: "€75"
-      }
+      },
+      [VisaType.LongTerm]: defaultLongTerm,
+      [VisaType.Journalist]: defaultJournalist
     }
   },
   "usa": {
@@ -103,7 +126,7 @@ export const COUNTRIES_DATA: CountriesData = {
     code: "US",
     coordinates: { top: 32, left: 20 },
     visa: {
-      [VisaType.Tourism]: {
+      [VisaType.ShortTerm]: {
         description: "B-2 Visa for tourism, vacation, or medical treatment.",
         requirements: ["DS-160 Form", "Interview", "Ties to Home Country"],
         process: ["Submit DS-160", "Pay fee", "Schedule and attend interview"],
@@ -111,7 +134,7 @@ export const COUNTRIES_DATA: CountriesData = {
         duration: "Up to 6 Months",
         cost: "$185 USD"
       },
-      [VisaType.Work]: {
+      [VisaType.WorkPermit]: {
         description: "H-1B or L-1 visas for specialty occupations.",
         requirements: ["Labor Condition Application", "Petition Approval"],
         process: ["Employer files petition", "Consular processing", "Visa stamping"],
@@ -126,7 +149,9 @@ export const COUNTRIES_DATA: CountriesData = {
         formalities: ["Report to DSO upon arrival", "Maintain full-time status"],
         duration: "Duration of Status",
         cost: "$185 + SEVIS Fee"
-      }
+      },
+      [VisaType.LongTerm]: defaultLongTerm,
+      [VisaType.Journalist]: defaultJournalist
     }
   },
   "canada": {
@@ -134,7 +159,7 @@ export const COUNTRIES_DATA: CountriesData = {
     code: "CA",
     coordinates: { top: 18, left: 22 },
     visa: {
-      [VisaType.Tourism]: {
+      [VisaType.ShortTerm]: {
         description: "Visitor visa or eTA for short-term visits.",
         requirements: ["Valid Passport", "Good Health", "No Criminal Record"],
         process: ["Create IRCC account", "Upload docs", "Biometrics appointment"],
@@ -142,7 +167,7 @@ export const COUNTRIES_DATA: CountriesData = {
         duration: "Up to 6 Months",
         cost: "$100 CAD"
       },
-      [VisaType.Work]: {
+      [VisaType.WorkPermit]: {
         description: "Employer-specific or Open Work Permit.",
         requirements: ["Job Offer", "LMIA (if applicable)"],
         process: ["Employer submits offer", "Apply online", "Medical exam (if req)"],
@@ -157,7 +182,9 @@ export const COUNTRIES_DATA: CountriesData = {
         formalities: ["Permit issuance at border", "Condition of stay compliance"],
         duration: "Length of program + 90 days",
         cost: "$150 CAD"
-      }
+      },
+      [VisaType.LongTerm]: defaultLongTerm,
+      [VisaType.Journalist]: defaultJournalist
     }
   }
 };
