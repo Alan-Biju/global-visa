@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { NavLink, Outlet, Link } from 'react-router-dom';
 import { Globe, Menu, X, Moon, Sun } from 'lucide-react';
@@ -32,10 +33,10 @@ const Layout: React.FC = () => {
           <div className="flex justify-between h-16 items-center">
             {/* Logo */}
             <Link to="/" className="flex items-center gap-2 group">
-              <div className="bg-indigo-600 p-2 rounded-lg group-hover:bg-indigo-500 transition-colors">
+              <div className="bg-indigo-600 p-2 rounded-lg group-hover:bg-indigo-500 transition-colors shadow-lg shadow-indigo-500/20">
                 <Globe className="h-6 w-6 text-white" />
               </div>
-              <span className="font-bold text-xl text-slate-800 dark:text-white tracking-tight">GlobalVisa</span>
+              <span className="font-black text-2xl text-slate-800 dark:text-white tracking-tighter">Flyconnect</span>
             </Link>
 
             {/* Desktop Nav */}
@@ -45,10 +46,10 @@ const Layout: React.FC = () => {
                   key={item.name}
                   to={item.path}
                   className={({ isActive }) =>
-                    `text-sm font-medium transition-colors duration-200 ${
+                    `text-sm font-bold tracking-tight transition-colors duration-200 uppercase ${
                       isActive
                         ? 'text-indigo-600 dark:text-indigo-400'
-                        : 'text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400'
+                        : 'text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400'
                     }`
                   }
                 >
@@ -94,7 +95,7 @@ const Layout: React.FC = () => {
                   to={item.path}
                   onClick={() => setIsMenuOpen(false)}
                   className={({ isActive }) =>
-                    `block px-3 py-2 rounded-md text-base font-medium ${
+                    `block px-3 py-2 rounded-md text-base font-bold ${
                       isActive
                         ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
                         : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400'
@@ -115,10 +116,18 @@ const Layout: React.FC = () => {
       </main>
 
       {/* Footer */}
-      <footer className="bg-slate-900 text-slate-400 py-8 border-t border-slate-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <p>© {new Date().getFullYear()} Global Visa Portal. All rights reserved.</p>
-          <p className="text-sm mt-2 text-slate-500">Simplify your travel documentation.</p>
+      <footer className="bg-slate-900 text-slate-400 py-12 border-t border-slate-800">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+          <div className="text-center md:text-left">
+            <div className="flex items-center justify-center md:justify-start gap-2 mb-4">
+               <Globe className="h-5 w-5 text-indigo-500" />
+               <span className="font-black text-xl text-white tracking-tighter">Flyconnect</span>
+            </div>
+            <p className="text-sm">Simplifying global mobility through automated documentation protocols.</p>
+          </div>
+          <div className="text-center md:text-right">
+            <p className="text-sm">© {new Date().getFullYear()} Flyconnect Portal. Secure Immigration Data.</p>
+          </div>
         </div>
       </footer>
     </div>

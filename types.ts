@@ -7,6 +7,18 @@ export enum VisaType {
   Journalist = 'Journalist / Media'
 }
 
+export interface ChecklistItem {
+  label: string;
+  url: string;
+}
+
+export interface DownloadItem {
+  label: string;
+  url: string;
+  description?: string;
+  isExternal?: boolean;
+}
+
 export interface VisaCategoryDetails {
   description: string;
   requirements: string[];
@@ -14,6 +26,9 @@ export interface VisaCategoryDetails {
   formalities: string[];
   duration: string;
   cost: string;
+  checklists?: ChecklistItem[]; // Array of document labels and their specific URLs
+  downloads?: DownloadItem[];   // Dynamic list of manuals, guides, and portal redirects
+  photoSpecs?: string;          // Custom photo requirement text
 }
 
 export interface CountryData {
