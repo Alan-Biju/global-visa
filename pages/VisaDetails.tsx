@@ -4,7 +4,7 @@ import { useLocation, Navigate, Link, useSearchParams, useNavigate } from 'react
 import { UserSelection, VisaType } from '../types';
 import { COUNTRIES_DATA, GLOBAL_DRIVE_URL } from '../constants';
 import { 
-  Download, ArrowLeft, FileCheck, Info, ClipboardList, ShieldAlert, 
+  Download, ArrowLeft, Info, ClipboardList, ShieldAlert, 
   Clock, CheckCircle2, Share2, MessageSquareText, 
   FileText, Camera, ExternalLink, ListChecks, Globe 
 } from 'lucide-react';
@@ -16,7 +16,7 @@ const VisaDetails: React.FC = () => {
   const [searchParams] = useSearchParams();
   const [detailsState, setDetailsState] = useState<UserSelection | null>(null);
   const [copySuccess, setCopySuccess] = useState(false);
-  const [activeTab, setActiveTab] = useState<'requirements' | 'checklists' | 'process' | 'photos' | 'downloads' | 'formalities'>('requirements');
+  const [activeTab, setActiveTab] = useState<'requirements' | 'photos' | 'downloads' | 'formalities'>('requirements');
 
   useEffect(() => {
     if (location.state && (location.state as any).originId) {
@@ -79,8 +79,6 @@ const VisaDetails: React.FC = () => {
 
   const tabs = [
     { id: 'requirements', label: 'Requirements', icon: ClipboardList },
-    { id: 'checklists', label: 'Checklists', icon: ListChecks },
-    { id: 'process', label: 'Process', icon: FileCheck },
     { id: 'photos', label: 'Photo Specs', icon: Camera },
     { id: 'downloads', label: 'Downloads', icon: Download },
     { id: 'formalities', label: 'Formalities', icon: Info },
@@ -115,10 +113,6 @@ const VisaDetails: React.FC = () => {
                 </p>
             </div>
             <div className="relative z-10 grid grid-cols-2 gap-4">
-               <div className="bg-indigo-50 dark:bg-indigo-900/40 p-4 rounded-2xl border border-indigo-100 dark:border-indigo-800/50 min-w-[140px]">
-                    <p className="text-[10px] font-black uppercase text-indigo-400">Validity</p>
-                    <p className="font-bold text-slate-900 dark:text-white">{visaDetails.duration}</p>
-               </div>
                <div className="bg-emerald-50 dark:bg-emerald-900/40 p-4 rounded-2xl border border-emerald-100 dark:border-emerald-800/50 min-w-[140px]">
                     <p className="text-[10px] font-black uppercase text-emerald-400">Cost</p>
                     <p className="font-bold text-slate-900 dark:text-white">{visaDetails.cost}</p>
@@ -168,62 +162,30 @@ const VisaDetails: React.FC = () => {
                     </div>
                   ))}
                 </div>
-              </div>
-            )}
 
-            {activeTab === 'checklists' && (
-              <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 space-y-8">
-                <div>
-                  <h2 className="text-xl font-black mb-4 tracking-tight">Official Submission Checklists</h2>
-                  <p className="text-slate-500 mb-6 font-medium">Select and download the specific verified checklist required for your case submission:</p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {(visaDetails.checklists || []).map((item, i) => (
-                      <a key={i} href={item.url} target="_blank" rel="noopener" className="flex items-center gap-3 p-5 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all group bg-white dark:bg-slate-800 shadow-sm">
-                        <div className="p-2 bg-red-50 dark:bg-red-900/20 rounded-lg group-hover:bg-red-100 transition-colors">
-                          <FileText className="h-6 w-6 text-red-500" />
-                        </div>
-                        <span className="text-sm font-bold text-slate-700 dark:text-slate-300 group-hover:text-indigo-600">{item.label}</span>
-                        <Download className="h-4 w-4 ml-auto text-slate-300 group-hover:text-indigo-500" />
-                      </a>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="p-8 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50 rounded-3xl space-y-4">
-                  <div className="flex items-center gap-3 text-amber-700 dark:text-amber-400 font-black uppercase text-xs tracking-widest">
-                    <ShieldAlert className="h-6 w-6" />
-                    Compliance Alert: Schengen Health Protocol
-                  </div>
-                  <p className="text-slate-700 dark:text-slate-300 font-bold text-lg">
-                    Travel medical insurance is mandatory for all Schengen countries and many other global destinations. 
-                    <a href="#" className="ml-2 text-indigo-600 dark:text-indigo-400 underline hover:no-underline transition-all">Purchase Verified Policy</a>
-                  </p>
-                  <ul className="grid gap-2 text-sm text-slate-600 dark:text-slate-400 font-bold list-disc pl-5">
-                    <li>Policy must cover repatriation and emergency medical expenses.</li>
-                    <li>Bank statements must clearly show applicant name and current address.</li>
-                    <li>Photos must not be older than 6 months or previously used in any visa.</li>
-                  </ul>
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'process' && (
-              <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-                <h2 className="text-xl font-black mb-10 tracking-tight">Application Lifecycle Protocol</h2>
-                <div className="relative space-y-0 pl-6 border-l-4 border-indigo-100 dark:border-indigo-900/50 ml-4">
-                  {visaDetails.process?.map((step, i) => (
-                    <div key={i} className="relative pb-12 last:pb-0 pl-12 group">
-                      <div className="absolute left-[-30px] top-0 w-12 h-12 rounded-2xl bg-white dark:bg-slate-800 border-4 border-indigo-600 text-indigo-600 flex items-center justify-center font-black shadow-xl group-hover:bg-indigo-600 group-hover:text-white transition-all duration-300">
-                        {i + 1}
-                      </div>
-                      <div className="p-6 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 group-hover:border-indigo-500 transition-colors shadow-sm">
-                        <p className="text-slate-800 dark:text-slate-200 font-black text-lg tracking-tight">{step}</p>
-                      </div>
+                {!!(visaDetails.checklists || []).length && (
+                  <div className="mt-10">
+                    <h3 className="text-lg font-black mb-4 tracking-tight flex items-center gap-2">
+                      <ListChecks className="h-5 w-5 text-indigo-600" />
+                      Official Submission Checklists
+                    </h3>
+                    <p className="text-slate-500 mb-6 font-medium">Select and download the specific verified checklist required for your case submission:</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {(visaDetails.checklists || []).map((item, i) => (
+                        <a key={i} href={item.url} target="_blank" rel="noopener" className="flex items-center gap-3 p-5 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all group bg-white dark:bg-slate-800 shadow-sm">
+                          <div className="p-2 bg-red-50 dark:bg-red-900/20 rounded-lg group-hover:bg-red-100 transition-colors">
+                            <FileText className="h-6 w-6 text-red-500" />
+                          </div>
+                          <span className="text-sm font-bold text-slate-700 dark:text-slate-300 group-hover:text-indigo-600">{item.label}</span>
+                          <Download className="h-4 w-4 ml-auto text-slate-300 group-hover:text-indigo-500" />
+                        </a>
+                      ))}
                     </div>
-                  ))}
-                </div>
+                  </div>
+                )}
               </div>
             )}
+
 
             {activeTab === 'photos' && (
               <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 max-w-4xl mx-auto">
@@ -279,7 +241,13 @@ const VisaDetails: React.FC = () => {
                 </div>
                 
                 <div className="grid gap-6">
-                  {(visaDetails.downloads || []).map((item, i) => {
+                  {(visaDetails.downloads || [])
+                    .filter((item) => {
+                      const label = (item.label || '').toLowerCase();
+                      const url = (item.url || '').toLowerCase();
+                      return !label.includes('vfs') && !url.includes('vfs');
+                    })
+                    .map((item, i) => {
                     const isMain = i === 0 && !item.isExternal;
                     return (
                       <a 

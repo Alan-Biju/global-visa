@@ -55,7 +55,6 @@ export interface UserSelection {
 export interface QueryFormData {
   name: string;
   contact: string;
+  email: string;
   destination: string;
-  date: string;
-  address: string;
 }

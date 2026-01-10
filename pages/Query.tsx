@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Send, Mail, User, Calendar, MapPin, Phone, Globe } from 'lucide-react';
+import { Send, Mail, User, Phone, Globe, CheckCircle2, X } from 'lucide-react';
 import { QueryFormData } from '../types';
 import SEO from '../components/SEO';
 
@@ -10,10 +10,10 @@ const Query: React.FC = () => {
   const [formData, setFormData] = useState<QueryFormData>({
     name: '',
     contact: '',
+    email: '',
     destination: '',
-    date: '',
-    address: ''
   });
+  const [showSuccess, setShowSuccess] = useState(false);
 
   useEffect(() => {
     if (location.state && (location.state as any).destination) {
@@ -33,24 +33,12 @@ const Query: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Construct Email Body
-    const subject = `Visa Query from ${formData.name}`;
-    const body = `
-New Visa Query Request
-----------------------
-Name: ${formData.name}
-Contact Info: ${formData.contact}
-Destination Point: ${formData.destination}
-Target Travel Date: ${formData.date}
-Current Residence: ${formData.address}
-    `.trim();
+    setShowSuccess(true);
+  };
 
-    // Encode URI for mailto
-    const mailtoUrl = `mailto:support@globalvisa.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    
-    // Open Email Client
-    window.location.href = mailtoUrl;
+  const handleCloseSuccess = () => {
+    setShowSuccess(false);
+    setFormData({ name: '', contact: '', email: '', destination: '' });
   };
 
   return (
@@ -109,7 +97,7 @@ Current Residence: ${formData.address}
                 type="text"
                 required
                 className="peer w-full h-12 pl-10 border-b border-slate-200 dark:border-slate-700 bg-transparent text-slate-900 dark:text-white placeholder-transparent focus:outline-none focus:border-indigo-600 dark:focus:border-indigo-400 focus:border-b-2 transition-all duration-300 font-medium"
-                placeholder="Email or Phone"
+                placeholder="Contact Number"
                 value={formData.contact}
                 onChange={handleChange}
               />
@@ -117,7 +105,28 @@ Current Residence: ${formData.address}
                 peer-placeholder-shown:top-3 peer-placeholder-shown:text-base peer-placeholder-shown:text-slate-400 
                 peer-focus:-top-3.5 peer-focus:text-xs peer-focus:font-bold peer-focus:text-indigo-600 dark:peer-focus:text-indigo-400
                 peer-valid:-top-3.5 peer-valid:text-xs peer-valid:font-bold">
-                Email or Phone Number
+                Contact Number
+              </label>
+            </div>
+
+            {/* Email Input */}
+            <div className="relative group">
+              <Mail className="absolute left-0 bottom-4 h-5 w-5 text-slate-300 dark:text-slate-600 transition-colors duration-300 group-focus-within:text-indigo-600 dark:group-focus-within:text-indigo-400" />
+              <input
+                id="email"
+                name="email"
+                type="email"
+                required
+                className="peer w-full h-12 pl-10 border-b border-slate-200 dark:border-slate-700 bg-transparent text-slate-900 dark:text-white placeholder-transparent focus:outline-none focus:border-indigo-600 dark:focus:border-indigo-400 focus:border-b-2 transition-all duration-300 font-medium"
+                placeholder="Email"
+                value={formData.email}
+                onChange={handleChange}
+              />
+              <label htmlFor="email" className="absolute left-10 top-3 text-slate-400 dark:text-slate-500 text-base transition-all duration-300 pointer-events-none
+                peer-placeholder-shown:top-3 peer-placeholder-shown:text-base peer-placeholder-shown:text-slate-400 
+                peer-focus:-top-3.5 peer-focus:text-xs peer-focus:font-bold peer-focus:text-indigo-600 dark:peer-focus:text-indigo-400
+                peer-valid:-top-3.5 peer-valid:text-xs peer-valid:font-bold">
+                Email
               </label>
             </div>
 
@@ -142,59 +151,13 @@ Current Residence: ${formData.address}
               </label>
             </div>
 
-            {/* Date Input */}
-            <div className="relative group">
-              <Calendar className="absolute left-0 bottom-4 h-5 w-5 text-slate-300 dark:text-slate-600 transition-colors duration-300 group-focus-within:text-indigo-600 dark:group-focus-within:text-indigo-400" />
-              <input
-                id="date"
-                name="date"
-                type="text"
-                onFocus={(e) => (e.target.type = "date")}
-                onBlur={(e) => {
-                  if (!e.target.value) e.target.type = "text";
-                }}
-                required
-                className="peer w-full h-12 pl-10 border-b border-slate-200 dark:border-slate-700 bg-transparent text-slate-900 dark:text-white placeholder-transparent focus:outline-none focus:border-indigo-600 dark:focus:border-indigo-400 focus:border-b-2 transition-all duration-300 font-medium"
-                placeholder="Date"
-                value={formData.date}
-                onChange={handleChange}
-              />
-              <label htmlFor="date" className="absolute left-10 top-3 text-slate-400 dark:text-slate-500 text-base transition-all duration-300 pointer-events-none
-                peer-placeholder-shown:top-3 peer-placeholder-shown:text-base peer-placeholder-shown:text-slate-400 
-                peer-focus:-top-3.5 peer-focus:text-xs peer-focus:font-bold peer-focus:text-indigo-600 dark:peer-focus:text-indigo-400
-                peer-valid:-top-3.5 peer-valid:text-xs peer-valid:font-bold">
-                Target Travel Date
-              </label>
-            </div>
-
-            {/* Address Input */}
-            <div className="relative group">
-              <MapPin className="absolute left-0 top-3 h-5 w-5 text-slate-300 dark:text-slate-600 transition-colors duration-300 group-focus-within:text-indigo-600 dark:group-focus-within:text-indigo-400" />
-              <textarea
-                id="address"
-                name="address"
-                required
-                rows={2}
-                className="peer w-full pl-10 border-b border-slate-200 dark:border-slate-700 bg-transparent text-slate-900 dark:text-white placeholder-transparent focus:outline-none focus:border-indigo-600 dark:focus:border-indigo-400 focus:border-b-2 transition-all duration-300 font-medium py-2 leading-relaxed resize-none"
-                placeholder="Address"
-                value={formData.address}
-                onChange={handleChange}
-              />
-              <label htmlFor="address" className="absolute left-10 top-2 text-slate-400 dark:text-slate-500 text-base transition-all duration-300 pointer-events-none
-                peer-placeholder-shown:top-2 peer-placeholder-shown:text-base peer-placeholder-shown:text-slate-400 
-                peer-focus:-top-3.5 peer-focus:text-xs peer-focus:font-bold peer-focus:text-indigo-600 dark:peer-focus:text-indigo-400
-                peer-valid:-top-3.5 peer-valid:text-xs peer-valid:font-bold">
-                Current Residence
-              </label>
-            </div>
-
             <div className="pt-6">
               <button
                 type="submit"
                 className="group w-full flex justify-center py-5 px-6 border border-transparent text-lg font-black rounded-2xl text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/20 transition-all duration-300 shadow-xl shadow-indigo-500/30 hover:shadow-indigo-500/50 hover:-translate-y-1"
               >
                 <div className="flex items-center gap-3">
-                  <span>Send Query Protocol</span>
+                  <span>Send Query</span>
                   <Send className="h-5 w-5 text-indigo-100 group-hover:translate-x-1 transition-transform" />
                 </div>
               </button>
@@ -202,6 +165,45 @@ Current Residence: ${formData.address}
           </form>
         </div>
       </div>
+
+      {showSuccess && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden">
+            <div className="p-6 flex items-start justify-between">
+              <div className="flex items-center gap-3">
+                <div className="h-12 w-12 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center">
+                  <CheckCircle2 className="h-7 w-7 text-emerald-600 dark:text-emerald-400" />
+                </div>
+                <div>
+                  <p className="text-lg font-black text-slate-900 dark:text-white tracking-tight">Query Sent</p>
+                  <p className="text-sm font-bold text-slate-500 dark:text-slate-400">
+                    FlyConnect will contact you soon.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={handleCloseSuccess}
+                className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 transition-colors"
+                aria-label="Close"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="px-6 pb-6">
+              <p className="text-slate-700 dark:text-slate-200 font-semibold leading-relaxed">
+                Your query has been sent successfully. Our team will contact you very soon.
+              </p>
+              <button
+                onClick={handleCloseSuccess}
+                className="mt-6 w-full inline-flex items-center justify-center rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-black py-4 shadow-xl shadow-indigo-500/25 transition-all active:scale-[0.99]"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
