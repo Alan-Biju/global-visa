@@ -146,7 +146,6 @@ export const COUNTRIES_DATA: CountriesData = {
         ],
         downloads: [
           { label: "Japan Visa Application Form (PDF)", url: "https://www.mofa.go.jp/files/000124525.pdf", isExternal: true, description: "Official MOFA application template" },
-          { label: "VFS Japan Appointment Portal", url: "https://visa.vfsglobal.com/ind/en/jpn/", isExternal: true, description: "Schedule your submission appointment" },
           { label: "Flyconnect Master Submission Guide", url: GLOBAL_DRIVE_URL, description: "Internal protocol for error-free filing" }
         ],
         photoSpecs: "Size 45mm X 35mm, white background, matte finish, 80% face coverage. High resolution, strictly no borders or glares on glasses."

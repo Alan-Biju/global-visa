@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, CheckCircle2, Map as MapIcon, Shield, ChevronLeft, ChevronRight, Play, Navigation } from 'lucide-react';
+import { ArrowRight, CheckCircle2, Map as MapIcon, Shield, ChevronLeft, ChevronRight, Play, Navigation, Star } from 'lucide-react';
 import { generateHeroImage } from '../services/geminiService';
 import { COUNTRIES_DATA } from '../constants';
 import SEO from '../components/SEO';
@@ -28,6 +28,7 @@ const Home: React.FC = () => {
   const [heroImage, setHeroImage] = useState<string | null>(null);
   const [loadingImage, setLoadingImage] = useState(false);
   const [currentFeature, setCurrentFeature] = useState(0);
+  const testimonialsRef = useRef<HTMLDivElement | null>(null);
   
   // Timer reference to handle auto-play resets
   const timerRef = useRef<number | null>(null);
@@ -74,6 +75,13 @@ const Home: React.FC = () => {
   const goToSlide = (index: number) => {
     setCurrentFeature(index);
     startTimer(); // Reset timer on manual interaction
+  };
+
+  const scrollTestimonials = (direction: 'left' | 'right') => {
+    const el = testimonialsRef.current;
+    if (!el) return;
+    const amount = Math.max(320, Math.floor(el.clientWidth * 0.9));
+    el.scrollBy({ left: direction === 'left' ? -amount : amount, behavior: 'smooth' });
   };
 
   const handleCountryClick = (countryId: string) => {
@@ -296,6 +304,97 @@ const Home: React.FC = () => {
                 ))}
               </div>
 
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="py-20 bg-slate-50 dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800 transition-colors duration-300" aria-label="Happy Customers">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-14">
+            <h2 className="text-3xl font-bold text-slate-900 dark:text-white">Happy Customers</h2>
+            <p className="mt-4 text-slate-600 dark:text-slate-400">Real reviews from customers who chose FlyConnect.</p>
+          </div>
+
+          <div className="relative">
+            <button
+              onClick={() => scrollTestimonials('left')}
+              aria-label="Previous reviews"
+              className="hidden md:flex absolute -left-5 top-1/2 -translate-y-1/2 z-10 p-3 rounded-full bg-white/90 dark:bg-slate-800/90 backdrop-blur border border-slate-200 dark:border-slate-700 shadow-lg hover:shadow-xl transition-all hover:scale-105"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </button>
+            <button
+              onClick={() => scrollTestimonials('right')}
+              aria-label="Next reviews"
+              className="hidden md:flex absolute -right-5 top-1/2 -translate-y-1/2 z-10 p-3 rounded-full bg-white/90 dark:bg-slate-800/90 backdrop-blur border border-slate-200 dark:border-slate-700 shadow-lg hover:shadow-xl transition-all hover:scale-105"
+            >
+              <ChevronRight className="h-5 w-5" />
+            </button>
+
+            <div
+              ref={testimonialsRef}
+              className="-mx-4 px-4 flex gap-4 overflow-x-auto no-scrollbar scroll-smooth snap-x snap-mandatory scroll-px-4 pb-2 sm:mx-0 sm:px-0"
+            >
+              {[
+              {
+                name: 'Priya S.',
+                title: 'Tourist Visa Support',
+                review:
+                  'Very smooth process. FlyConnect guided me through the document checklist clearly and answered all my questions quickly.',
+              },
+              {
+                name: 'Rohit K.',
+                title: 'Work Permit Assistance',
+                review:
+                  'Professional and responsive. I got the requirements in simple language and the submission guidance was spot on.',
+              },
+              {
+                name: 'Ananya M.',
+                title: 'Student Visa Guidance',
+                review:
+                  'Fast support and easy to understand steps. The checklist downloads were helpful and saved me a lot of time.',
+              },
+              {
+                name: 'Sanjay R.',
+                title: 'Family Visit Visa',
+                review:
+                  'The team explained everything in a simple way and kept following up until my documents were ready. Highly recommended.',
+              },
+            ].map((t, idx) => (
+              <div
+                key={idx}
+                className="snap-center shrink-0 w-[calc(100%-2rem)] sm:w-[420px] md:w-[360px] bg-white/90 dark:bg-slate-900/60 backdrop-blur rounded-3xl border border-slate-200 dark:border-slate-800 p-7 sm:p-8 shadow-xl hover:shadow-2xl transition-all"
+              >
+                <div className="flex items-center gap-1 text-amber-400 mb-5">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Star key={i} className="h-5 w-5 fill-current" />
+                  ))}
+                </div>
+                <p className="text-slate-700 dark:text-slate-200 font-semibold leading-relaxed">“{t.review}”</p>
+                <div className="mt-6 pt-6 border-t border-slate-100 dark:border-slate-800">
+                  <p className="font-black text-slate-900 dark:text-white">{t.name}</p>
+                  <p className="text-sm font-bold text-slate-500 dark:text-slate-400">{t.title}</p>
+                </div>
+              </div>
+            ))}
+            </div>
+
+            <div className="mt-6 flex items-center justify-center gap-4 md:hidden">
+              <button
+                onClick={() => scrollTestimonials('left')}
+                aria-label="Previous reviews"
+                className="inline-flex items-center justify-center h-12 w-12 rounded-full bg-white/90 dark:bg-slate-800/90 backdrop-blur border border-slate-200 dark:border-slate-700 shadow-lg active:scale-95 transition-transform"
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </button>
+              <button
+                onClick={() => scrollTestimonials('right')}
+                aria-label="Next reviews"
+                className="inline-flex items-center justify-center h-12 w-12 rounded-full bg-white/90 dark:bg-slate-800/90 backdrop-blur border border-slate-200 dark:border-slate-700 shadow-lg active:scale-95 transition-transform"
+              >
+                <ChevronRight className="h-5 w-5" />
+              </button>
             </div>
           </div>
         </div>

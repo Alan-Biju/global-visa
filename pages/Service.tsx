@@ -11,11 +11,11 @@ const Service: React.FC = () => {
   const location = useLocation();
   
   // Form State
-  const [origin, setOrigin] = useState<string>('');
+  const [origin, setOrigin] = useState<string>('india');
   const [destination, setDestination] = useState<string>('');
   const [visaType, setVisaType] = useState<VisaType | null>(null);
   
-  const [selectedOriginName, setSelectedOriginName] = useState<string>('Select Origin');
+  const [selectedOriginName, setSelectedOriginName] = useState<string>(COUNTRIES_DATA['india']?.name || 'India');
   const [selectedDestName, setSelectedDestName] = useState<string>('Select Destination');
   
   // Modal State
