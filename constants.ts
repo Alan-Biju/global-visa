@@ -4,7 +4,7 @@ import { CountriesData, VisaType } from './types';
 export const APP_NAME = "Flyconnect";
 
 // Central dynamic link for all document protocols
-export const GLOBAL_DRIVE_URL = "https://drive.google.com/file/d/1obqfHNBQEJxYEAPhgGVZ0yLevF1B4U7f/view";
+export const GLOBAL_DRIVE_URL = import.meta.env.VITE_GLOBAL_DRIVE_URL;
 
 const commonPhotoSpecs = "Two recent passport size photos (35mm X 45mm) with white background. Face coverage must be 70% - 80% and the photo must not be older than 6 months.";
 
@@ -61,55 +61,55 @@ const defaultLongTerm = {
 
 export const COUNTRIES_DATA: CountriesData = {
   "india": {
-     name: "India",
-     code: "IN",
-     coordinates: { top: 44, left: 69 },
-     visa: {
-       [VisaType.ShortTerm]: {
-         description: "Tourist Visa for recreation and sightseeing.",
-         requirements: ["Passport (6 months validity)", "Passport Photo", "Return Ticket"],
-         process: ["Fill online application", "Submit biometrics"],
-         formalities: ["Immigration check upon arrival"],
-         duration: "30 Days to 5 Years",
-         cost: "$25 - $80 USD",
-         checklists: [
-           { label: "Tourist Checklist", url: GLOBAL_DRIVE_URL },
-           { label: "Health Declaration", url: GLOBAL_DRIVE_URL }
-         ],
-         downloads: [
-           { label: "India e-Visa Guide", url: "https://indianvisaonline.gov.in/", isExternal: true, description: "Official e-Visa portal redirect" }
-         ],
-         photoSpecs: commonPhotoSpecs
-       },
-       [VisaType.WorkPermit]: {
-         description: "Employment Visa for skilled professionals.",
-         requirements: ["Employment Contract", "Company Registration Proof"],
-         process: ["Employer files petition", "Applicant visits embassy"],
-         formalities: ["FRRO Registration"],
-         duration: "1 Year",
-         cost: "$100+ USD",
-         checklists: [
-           { label: "Work Visa Checklist", url: GLOBAL_DRIVE_URL },
-           { label: "Employer Undertaking", url: GLOBAL_DRIVE_URL }
-         ],
-         photoSpecs: commonPhotoSpecs
-       },
-       [VisaType.Student]: {
-         description: "Student Visa for academic pursuits.",
-         requirements: ["Admission Letter", "Financial Proof"],
-         process: ["Consulate interview"],
-         formalities: ["University registration"],
-         duration: "Course Duration",
-         cost: "$80 USD",
-         checklists: [
-           { label: "Student Checklist", url: GLOBAL_DRIVE_URL },
-           { label: "Sponsorship Letter", url: GLOBAL_DRIVE_URL }
-         ],
-         photoSpecs: commonPhotoSpecs
-       },
-       [VisaType.LongTerm]: defaultLongTerm,
-       [VisaType.Journalist]: defaultJournalist
-     }
+    name: "India",
+    code: "IN",
+    coordinates: { top: 44, left: 69 },
+    visa: {
+      [VisaType.ShortTerm]: {
+        description: "Tourist Visa for recreation and sightseeing.",
+        requirements: ["Passport (6 months validity)", "Passport Photo", "Return Ticket"],
+        process: ["Fill online application", "Submit biometrics"],
+        formalities: ["Immigration check upon arrival"],
+        duration: "30 Days to 5 Years",
+        cost: "$25 - $80 USD",
+        checklists: [
+          { label: "Tourist Checklist", url: GLOBAL_DRIVE_URL },
+          { label: "Health Declaration", url: GLOBAL_DRIVE_URL }
+        ],
+        downloads: [
+          { label: "India e-Visa Guide", url: "https://indianvisaonline.gov.in/", isExternal: true, description: "Official e-Visa portal redirect" }
+        ],
+        photoSpecs: commonPhotoSpecs
+      },
+      [VisaType.WorkPermit]: {
+        description: "Employment Visa for skilled professionals.",
+        requirements: ["Employment Contract", "Company Registration Proof"],
+        process: ["Employer files petition", "Applicant visits embassy"],
+        formalities: ["FRRO Registration"],
+        duration: "1 Year",
+        cost: "$100+ USD",
+        checklists: [
+          { label: "Work Visa Checklist", url: GLOBAL_DRIVE_URL },
+          { label: "Employer Undertaking", url: GLOBAL_DRIVE_URL }
+        ],
+        photoSpecs: commonPhotoSpecs
+      },
+      [VisaType.Student]: {
+        description: "Student Visa for academic pursuits.",
+        requirements: ["Admission Letter", "Financial Proof"],
+        process: ["Consulate interview"],
+        formalities: ["University registration"],
+        duration: "Course Duration",
+        cost: "$80 USD",
+        checklists: [
+          { label: "Student Checklist", url: GLOBAL_DRIVE_URL },
+          { label: "Sponsorship Letter", url: GLOBAL_DRIVE_URL }
+        ],
+        photoSpecs: commonPhotoSpecs
+      },
+      [VisaType.LongTerm]: defaultLongTerm,
+      [VisaType.Journalist]: defaultJournalist
+    }
   },
   "japan": {
     name: "Japan",
@@ -194,6 +194,71 @@ export const COUNTRIES_DATA: CountriesData = {
   },
   "germany": {
     name: "Germany",
+    code: "DE",
+    coordinates: { top: 26, left: 51 },
+    visa: {
+      [VisaType.ShortTerm]: {
+        description: "Schengen visa for short stays in Germany and the EU region.",
+        requirements: [
+          "1. Valid Passport with 2 blank pages and 3 months validity beyond stay.",
+          "2. Travel Health Insurance (€30,000 coverage, valid for all Schengen states).",
+          "3. Confirmed Hotel Bookings for the entire duration.",
+          "4. Proof of Employment / Last 3 Salary Slips.",
+          "5. Cover letter detailing purpose of visit and itinerary."
+        ],
+        process: ["Online Videx application", "VFS Appointment booking", "Biometric collection", "Review"],
+        formalities: ["Passport control interview on initial entry into Schengen"],
+        duration: "90 Days",
+        cost: "€80 + VFS Service Fee",
+        checklists: [
+          { label: "Short-term Tourist Checklist", url: GLOBAL_DRIVE_URL },
+          { label: "Schengen Business Checklist", url: GLOBAL_DRIVE_URL },
+          { label: "Cultural/Sport Event Checklist", url: GLOBAL_DRIVE_URL }
+        ],
+        downloads: [
+          { label: "Digital Videx Portal (Germany)", url: "https://videx.diplo.de/", isExternal: true, description: "Mandatory digital application portal" },
+          { label: "Schengen Health Insurance Rules", url: GLOBAL_DRIVE_URL, description: "Detailed regulatory requirements for policy" }
+        ],
+        photoSpecs: "Standard Schengen biometric specifications (35x45mm, high contrast)."
+      },
+      [VisaType.WorkPermit]: {
+        description: "Employment visa including EU Blue Card for skilled workers.",
+        requirements: ["Job Offer", "University Degree (Anabin/ZAB recognized)", "Employment Contract with salary details"],
+        process: ["National Visa Appointment", "Consular Interview", "D-Visa issuance"],
+        formalities: ["Anmeldung (City Address Registration)", "Health insurance activation"],
+        duration: "Up to 4 Years",
+        cost: "€75",
+        checklists: [
+          { label: "Blue Card Checklist", url: GLOBAL_DRIVE_URL },
+          { label: "Specialist Work Checklist", url: GLOBAL_DRIVE_URL }
+        ],
+        downloads: [
+          { label: "Recognition of Foreign Qualifications", url: "https://www.anabin.kmk.org/", isExternal: true, description: "Anabin database for degree verification" }
+        ],
+        photoSpecs: commonPhotoSpecs
+      },
+      [VisaType.Student]: {
+        description: "Student visa for higher education (Bachelor/Master) in Germany.",
+        requirements: ["University Admission Letter", "Blocked Account (Sperrkonto) Proof (€11,208)", "Language certificates"],
+        process: ["Open Blocked Account", "Apply at German Embassy", "Stamping"],
+        formalities: ["University enrollment", "Residence permit application at Foreigners' Office"],
+        duration: "Study duration",
+        cost: "€75",
+        checklists: [
+          { label: "Student Visa Checklist", url: GLOBAL_DRIVE_URL },
+          { label: "Blocked Account Opening Manual", url: GLOBAL_DRIVE_URL }
+        ],
+        downloads: [
+          { label: "Fintiba Blocked Account Portal", url: "https://www.fintiba.com/", isExternal: true, description: "Official partner for Sperrkonto" }
+        ],
+        photoSpecs: commonPhotoSpecs
+      },
+      [VisaType.LongTerm]: defaultLongTerm,
+      [VisaType.Journalist]: defaultJournalist
+    }
+  },
+  "a": {
+    name: "a",
     code: "DE",
     coordinates: { top: 26, left: 51 },
     visa: {

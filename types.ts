@@ -1,11 +1,13 @@
 
-export enum VisaType {
-  ShortTerm = 'Short Term Visa',
-  LongTerm = 'Long Term Visa',
-  WorkPermit = 'Work Permit',
-  Student = 'Student Visa',
-  Journalist = 'Journalist / Media'
-}
+export const VisaType = {
+  ShortTerm: 'Short Term Visa',
+  LongTerm: 'Long Term Visa',
+  WorkPermit: 'Work Permit',
+  Student: 'Student Visa',
+  Journalist: 'Journalist / Media'
+} as const;
+
+export type VisaType = typeof VisaType[keyof typeof VisaType] | string;
 
 export interface ChecklistItem {
   label: string;
@@ -31,13 +33,19 @@ export interface VisaCategoryDetails {
   photoSpecs?: string;          // Custom photo requirement text
 }
 
+export interface CountryFile {
+  name: string;
+  url: string;
+}
+
 export interface CountryData {
   name: string;
   code: string;
   coordinates?: { top: number; left: number };
   visa: {
-    [key in VisaType]?: VisaCategoryDetails;
+    [key: string]: VisaCategoryDetails | undefined;
   };
+  files?: CountryFile[];
 }
 
 export interface CountriesData {

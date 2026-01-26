@@ -1,0 +1,397 @@
+import React, { useState, useEffect } from 'react';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { db } from '../firebase';
+import { VisaType, CountryData, VisaCategoryDetails, CountryFile } from '../types';
+import { Trash2, Plus, Save, ArrowLeft } from 'lucide-react';
+import { Link } from 'react-router-dom';
+
+const DEFAULT_VISA_DETAILS: VisaCategoryDetails = {
+    description: '',
+    requirements: [''],
+    process: [''],
+    formalities: [''],
+    duration: '',
+    cost: '',
+    checklists: [],
+    downloads: [],
+    photoSpecs: ''
+};
+
+const AdminCountryForm: React.FC = () => {
+    const [loading, setLoading] = useState(false);
+    const [status, setStatus] = useState('');
+
+    // Country Fields
+    const [countryId, setCountryId] = useState(''); // Document ID (slug)
+    const [name, setName] = useState('');
+    const [code, setCode] = useState('');
+    const [top, setTop] = useState<number>(0);
+    const [left, setLeft] = useState<number>(0);
+    const [files, setFiles] = useState<CountryFile[]>([]);
+
+    // Visa Data
+    const [visaData, setVisaData] = useState<Record<string, VisaCategoryDetails>>({});
+    const [selectedVisaType, setSelectedVisaType] = useState<VisaType | ''>('');
+
+    const handleAddVisaType = () => {
+        if (!selectedVisaType) return;
+        if (visaData[selectedVisaType]) {
+            alert("This visa type already exists for this country.");
+            return;
+        }
+        setVisaData({
+            ...visaData,
+            [selectedVisaType]: { ...DEFAULT_VISA_DETAILS }
+        });
+        setSelectedVisaType('');
+    };
+
+    const handleAddFile = () => {
+        setFiles([...files, { name: '', url: '' }]);
+    };
+
+    const updateFile = (index: number, field: keyof CountryFile, value: string) => {
+        const newFiles = [...files];
+        newFiles[index] = { ...newFiles[index], [field]: value };
+        setFiles(newFiles);
+    };
+
+    const removeFile = (index: number) => {
+        const newFiles = [...files];
+        newFiles.splice(index, 1);
+        setFiles(newFiles);
+    };
+
+    const handleRemoveVisaType = (type: string) => {
+        const newData = { ...visaData };
+        delete newData[type];
+        setVisaData(newData);
+    };
+
+    const updateVisaDetail = (type: string, field: keyof VisaCategoryDetails, value: any) => {
+        setVisaData(prev => ({
+            ...prev,
+            [type]: {
+                ...prev[type],
+                [field]: value
+            }
+        }));
+    };
+
+    const updateArrayField = (type: string, field: 'requirements' | 'process' | 'formalities', index: number, value: string) => {
+        const list = [...(visaData[type][field] || [])];
+        list[index] = value;
+        updateVisaDetail(type, field, list);
+    };
+
+    const addArrayItem = (type: string, field: 'requirements' | 'process' | 'formalities') => {
+        const list = [...(visaData[type][field] || [])];
+        list.push('');
+        updateVisaDetail(type, field, list);
+    };
+
+    const removeArrayItem = (type: string, field: 'requirements' | 'process' | 'formalities', index: number) => {
+        const list = [...(visaData[type][field] || [])];
+        list.splice(index, 1);
+        updateVisaDetail(type, field, list);
+    };
+
+    const handleSave = async () => {
+        if (!countryId || !name || !code) {
+            setStatus("Error: Country ID, Name, and Code are required.");
+            return;
+        }
+
+        setLoading(true);
+        setStatus('Saving...');
+
+        try {
+            const data: CountryData = {
+                name,
+                code,
+                coordinates: { top, left },
+                visa: visaData as any,
+                files: files
+            };
+
+            await setDoc(doc(db, 'countries', countryId.toLowerCase()), data);
+            setStatus('Saved successfully!');
+            // Optional: Reset form or keep it for editing
+        } catch (error: any) {
+            console.error("Error saving:", error);
+            setStatus(`Error: ${error.message}`);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Helper to load existing data (simple implementation for now: fetch by ID if user types it and hits Enter? Or just a separate list. sticking to Create/Overwrite for now as "Admin Form")
+    const loadExisting = async () => {
+        if (!countryId) return;
+        setLoading(true);
+        try {
+            const docRef = doc(db, 'countries', countryId.toLowerCase());
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {
+                const data = docSnap.data() as CountryData;
+                setName(data.name);
+                setCode(data.code);
+                setTop(data.coordinates?.top || 0);
+                setLeft(data.coordinates?.left || 0);
+                setVisaData(data.visa as any || {});
+                setFiles(data.files || []);
+                setStatus('Loaded existing data.');
+            } else {
+                setStatus('No existing data found for this ID. Creating new.');
+                // Reset fields if needed, or keep for new entry
+            }
+        } catch (e: any) {
+            setStatus(`Error loading: ${e.message}`);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="min-h-screen bg-slate-50 p-8 pb-32">
+            <div className="max-w-5xl mx-auto bg-white rounded-3xl shadow-xl p-8 border border-slate-200">
+                <div className="flex justify-between items-center mb-8">
+                    <h1 className="text-3xl font-black text-slate-800">Admin Console</h1>
+                    <Link to="/" className="flex items-center text-slate-500 hover:text-indigo-600 font-bold">
+                        <ArrowLeft className="mr-2 h-5 w-5" /> Back Home
+                    </Link>
+                </div>
+
+                {/* Global Status */}
+                {status && (
+                    <div className={`p-4 rounded-xl mb-8 font-bold ${status.includes('Error') ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'}`}>
+                        {status}
+                    </div>
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+
+                    {/* Country Identity */}
+                    <div className="space-y-6">
+                        <h2 className="text-xl font-bold text-slate-900 border-b pb-2">Country Identity</h2>
+
+                        <div>
+                            <label className="block text-sm font-bold text-slate-500 mb-1">Slug / ID (e.g., 'india')</label>
+                            <div className="flex gap-2">
+                                <input
+                                    value={countryId}
+                                    onChange={(e) => setCountryId(e.target.value)}
+                                    className="w-full p-3 border rounded-xl font-mono text-sm bg-slate-50 focus:ring-2 ring-indigo-500 outline-none"
+                                    placeholder="unique-id"
+                                />
+                                <button onClick={loadExisting} className="px-4 py-2 bg-slate-200 rounded-xl font-bold text-slate-600 hover:bg-slate-300">Load</button>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-bold text-slate-500 mb-1">Display Name</label>
+                            <input
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                                className="w-full p-3 border rounded-xl"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-bold text-slate-500 mb-1">ISO Code</label>
+                            <input
+                                value={code}
+                                onChange={(e) => setCode(e.target.value)}
+                                className="w-full p-3 border rounded-xl font-mono uppercase"
+                                maxLength={2}
+                            />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-bold text-slate-500 mb-1">Map Top (%)</label>
+                                <input
+                                    type="number"
+                                    value={top}
+                                    onChange={(e) => setTop(Number(e.target.value))}
+                                    className="w-full p-3 border rounded-xl"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-bold text-slate-500 mb-1">Map Left (%)</label>
+                                <input
+                                    type="number"
+                                    value={left}
+                                    onChange={(e) => setLeft(Number(e.target.value))}
+                                    className="w-full p-3 border rounded-xl"
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Global Files Manager */}
+                    <div className="space-y-6">
+                        <h2 className="text-xl font-bold text-slate-900 border-b pb-2">Country Files (Guides etc.)</h2>
+                        <div className="space-y-3">
+                            {files.length === 0 && <p className="text-slate-400 italic text-sm">No global files added.</p>}
+                            {files.map((file, idx) => (
+                                <div key={idx} className="flex gap-2 items-center bg-slate-50 p-2 rounded-xl border">
+                                    <div className="flex-1 grid gap-2">
+                                        <input
+                                            value={file.name}
+                                            onChange={(e) => updateFile(idx, 'name', e.target.value)}
+                                            className="w-full p-2 border rounded-lg text-sm"
+                                            placeholder="File Name (e.g. Travel Guide)"
+                                        />
+                                        <input
+                                            value={file.url}
+                                            onChange={(e) => updateFile(idx, 'url', e.target.value)}
+                                            className="w-full p-2 border rounded-lg text-sm"
+                                            placeholder="File URL (Google Drive etc.)"
+                                        />
+                                    </div>
+                                    <button onClick={() => removeFile(idx)} className="text-red-400 hover:text-red-600 p-2">
+                                        <Trash2 className="h-5 w-5" />
+                                    </button>
+                                </div>
+                            ))}
+                            <button
+                                onClick={handleAddFile}
+                                className="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl font-bold text-sm flex items-center justify-center gap-2"
+                            >
+                                <Plus className="h-4 w-4" /> Add File
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+
+                    {/* Visa Type Manager */}
+                    <div className="space-y-6">
+                        <h2 className="text-xl font-bold text-slate-900 border-b pb-2">Active Visa Types</h2>
+
+                        <div className="flex gap-2 mb-4">
+                            <div className="flex-1">
+                                <input
+                                    list="visaTypes"
+                                    value={selectedVisaType}
+                                    onChange={(e) => setSelectedVisaType(e.target.value)}
+                                    className="w-full p-3 border rounded-xl bg-white"
+                                    placeholder="Select or Type Visa Category..."
+                                />
+                                <datalist id="visaTypes">
+                                    {Object.values(VisaType).map(t => (
+                                        <option key={t} value={t} />
+                                    ))}
+                                </datalist>
+                            </div>
+                            <button
+                                onClick={handleAddVisaType}
+                                disabled={!selectedVisaType}
+                                className="bg-indigo-600 text-white p-3 rounded-xl disabled:opacity-50"
+                            >
+                                <Plus className="h-6 w-6" />
+                            </button>
+                        </div>
+
+                        <div className="space-y-2">
+                            {Object.keys(visaData).length === 0 && <p className="text-slate-400 italic">No visa types added yet.</p>}
+                            {Object.keys(visaData).map((type) => (
+                                <div key={type} className="flex justify-between items-center p-3 bg-indigo-50 rounded-xl border border-indigo-100">
+                                    <span className="font-bold text-indigo-900">{type}</span>
+                                    <button onClick={() => handleRemoveVisaType(type)} className="text-red-400 hover:text-red-600">
+                                        <Trash2 className="h-5 w-5" />
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Dynamic Forms for Each Visa Type */}
+                <div className="space-y-12">
+                    {(Object.entries(visaData) as [string, VisaCategoryDetails][]).map(([type, details]) => (
+                        <div key={type} className="bg-slate-50 rounded-3xl p-8 border border-slate-200">
+                            <h3 className="text-2xl font-black text-slate-800 mb-6 flex items-center gap-2">
+                                <span className="bg-indigo-600 text-white text-sm px-3 py-1 rounded-full uppercase tracking-wider">Configuring</span>
+                                {type}
+                            </h3>
+
+                            <div className="space-y-6">
+                                <div>
+                                    <label className="block text-xs uppercase font-bold text-slate-400 mb-1">Description</label>
+                                    <textarea
+                                        value={details.description}
+                                        onChange={(e) => updateVisaDetail(type, 'description', e.target.value)}
+                                        className="w-full p-3 rounded-xl border focus:ring-2 ring-indigo-500 outline-none"
+                                        rows={2}
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-xs uppercase font-bold text-slate-400 mb-1">Duration</label>
+                                        <input
+                                            value={details.duration}
+                                            onChange={(e) => updateVisaDetail(type, 'duration', e.target.value)}
+                                            className="w-full p-3 rounded-xl border"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs uppercase font-bold text-slate-400 mb-1">Cost</label>
+                                        <input
+                                            value={details.cost}
+                                            onChange={(e) => updateVisaDetail(type, 'cost', e.target.value)}
+                                            className="w-full p-3 rounded-xl border"
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Array Fields */}
+                                {(['requirements', 'process', 'formalities'] as const).map(field => (
+                                    <div key={field}>
+                                        <label className="block text-xs uppercase font-bold text-slate-400 mb-2">{field}</label>
+                                        <div className="space-y-2">
+                                            {(details[field] || []).map((item, idx) => (
+                                                <div key={idx} className="flex gap-2">
+                                                    <input
+                                                        value={item}
+                                                        onChange={(e) => updateArrayField(type, field, idx, e.target.value)}
+                                                        className="w-full p-3 rounded-xl border text-sm"
+                                                        placeholder={`Add ${field} item...`}
+                                                    />
+                                                    <button onClick={() => removeArrayItem(type, field, idx)} className="text-slate-400 hover:text-red-500">
+                                                        <Trash2 className="h-5 w-5" />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                            <button onClick={() => addArrayItem(type, field)} className="text-indigo-600 text-sm font-bold flex items-center gap-1 hover:underline">
+                                                <Plus className="h-4 w-4" /> Add Item
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                <div className="mt-12 sticky bottom-8 bg-white/10 backdrop-blur-sm p-4 rounded-2xl border border-white/20 shadow-2xl flex justify-end">
+                    <button
+                        onClick={handleSave}
+                        disabled={loading}
+                        className="bg-indigo-600 text-white px-8 py-4 rounded-xl font-black text-lg shadow-xl shadow-indigo-600/30 hover:shadow-indigo-600/50 hover:-translate-y-1 transition-all flex items-center gap-3"
+                    >
+                        <Save className="h-6 w-6" />
+                        {loading ? 'Committing Changes...' : 'Save Configuration'}
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    );
+};
+
+export default AdminCountryForm;
