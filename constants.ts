@@ -64,6 +64,7 @@ export const COUNTRIES_DATA: CountriesData = {
     name: "India",
     code: "IN",
     coordinates: { top: 44, left: 69 },
+    latlng: { lat: 20.5937, lng: 78.9629 }, // Added latlng for India
     visa: {
       [VisaType.ShortTerm]: {
         description: "Tourist Visa for recreation and sightseeing.",
@@ -115,6 +116,7 @@ export const COUNTRIES_DATA: CountriesData = {
     name: "Japan",
     code: "JP",
     coordinates: { top: 36, left: 86 },
+    latlng: { lat: 36.2048, lng: 138.2529 },
     visa: {
       [VisaType.ShortTerm]: {
         description: "Standard tourist visa for sightseeing and visiting friends in Japan.",
@@ -196,6 +198,7 @@ export const COUNTRIES_DATA: CountriesData = {
     name: "Germany",
     code: "DE",
     coordinates: { top: 26, left: 51 },
+    latlng: { lat: 51.1657, lng: 10.4515 },
     visa: {
       [VisaType.ShortTerm]: {
         description: "Schengen visa for short stays in Germany and the EU region.",

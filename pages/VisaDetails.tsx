@@ -57,6 +57,32 @@ const VisaDetails: React.FC = () => {
     (countryData && detailsState) ? countryData.visa[detailsState.visaType] : null
     , [countryData, detailsState]);
 
+  const isEVisa = useMemo(() => {
+    if (!detailsState) return false;
+    const type = detailsState.visaType.toLowerCase();
+    return type.includes('e-visa') || type.includes('e visa');
+  }, [detailsState]);
+
+  const tabs = useMemo(() => {
+    const baseTabs = [
+      { id: 'requirements', label: 'Requirements', icon: ClipboardList },
+      { id: 'photos', label: 'Photo Specs', icon: Camera },
+      { id: 'downloads', label: 'Downloads', icon: Download },
+      { id: 'formalities', label: 'Formalities', icon: Info },
+    ] as const;
+
+    if (isEVisa) {
+      return baseTabs.filter(t => t.id !== 'requirements');
+    }
+    return baseTabs;
+  }, [isEVisa]);
+
+  useEffect(() => {
+    if (isEVisa && activeTab === 'requirements') {
+      setActiveTab('photos');
+    }
+  }, [isEVisa, activeTab]);
+
   if (countriesLoading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-900">
@@ -90,12 +116,6 @@ const VisaDetails: React.FC = () => {
     }
   };
 
-  const tabs = [
-    { id: 'requirements', label: 'Requirements', icon: ClipboardList },
-    { id: 'photos', label: 'Photo Specs', icon: Camera },
-    { id: 'downloads', label: 'Downloads', icon: Download },
-    { id: 'formalities', label: 'Formalities', icon: Info },
-  ] as const;
 
   return (
     <div className="min-h-screen py-10 px-4 sm:px-6 bg-slate-50 dark:bg-slate-900 transition-colors duration-300">
@@ -138,6 +158,29 @@ const VisaDetails: React.FC = () => {
           </div>
         </div>
 
+        {/* E-Visa Special Header Notification */}
+        {isEVisa && (
+          <div className="bg-indigo-600 rounded-3xl p-8 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-6 overflow-hidden relative group">
+            <div className="absolute top-0 right-0 -mt-8 -mr-8 w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
+            <div className="flex items-center gap-4">
+              <div className="bg-white/20 p-4 rounded-2xl backdrop-blur-sm">
+                <Info className="h-8 w-8 text-white" />
+              </div>
+              <div>
+                <h3 className="text-2xl font-black tracking-tight">Instant E-Visa Protocol</h3>
+                <p className="text-indigo-100 font-bold">Contact our administrator for the comprehensive digital application dossier.</p>
+              </div>
+            </div>
+            <button
+              onClick={() => navigate('/query', { state: { destination: countryData.name } })}
+              className="bg-white text-indigo-600 px-8 py-4 rounded-2xl font-black hover:bg-indigo-50 transition-all flex items-center gap-2 shadow-lg hover:-translate-y-1"
+            >
+              Contact Owner
+              <ExternalLink className="h-4 w-4" />
+            </button>
+          </div>
+        )}
+
         {/* Dynamic Tab Switcher */}
         <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
           <div className="flex overflow-x-auto no-scrollbar border-b border-slate-100 dark:border-slate-700">
@@ -169,11 +212,11 @@ const VisaDetails: React.FC = () => {
                 </div>
                 <div className="grid gap-4">
                   {visaDetails.requirements.map((req, i) => (
-                    <div key={i} className="flex gap-4 p-5 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 group hover:border-indigo-500 transition-colors">
-                      <div className="h-8 w-8 rounded-full bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 flex items-center justify-center shrink-0 font-bold text-xs group-hover:scale-110 transition-transform">
-                        {i + 1}
+                    <div key={i} className="flex gap-4 py-2 border-b border-slate-100 dark:border-slate-800 last:border-0 group">
+                      <div className="text-indigo-600 font-black text-sm shrink-0 mt-1">
+                        {i + 1}.
                       </div>
-                      <p className="text-slate-700 dark:text-slate-300 font-semibold leading-relaxed">{req}</p>
+                      <p className="text-slate-700 dark:text-slate-300 font-medium leading-relaxed">{req}</p>
                     </div>
                   ))}
                 </div>
@@ -317,7 +360,7 @@ const VisaDetails: React.FC = () => {
               <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
                 <h2 className="text-xl font-black mb-10 tracking-tight">Mandatory Post-Entry Formalities</h2>
                 <div className="grid gap-6">
-                  {visaDetails.formalities?.map((item, i) => (
+                  {(countryData.formalities || []).map((item, i) => (
                     <div key={i} className="p-8 bg-slate-50 dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 font-bold text-lg text-slate-700 dark:text-slate-300 leading-relaxed shadow-sm">
                       {item}
                     </div>

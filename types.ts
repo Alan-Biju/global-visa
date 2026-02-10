@@ -25,7 +25,7 @@ export interface VisaCategoryDetails {
   description: string;
   requirements: string[];
   process: string[];
-  formalities: string[];
+  formalities?: string[];
   duration: string;
   cost: string;
   checklists?: ChecklistItem[]; // Array of document labels and their specific URLs
@@ -42,10 +42,12 @@ export interface CountryData {
   name: string;
   code: string;
   coordinates?: { top: number; left: number };
+  latlng?: { lat: number; lng: number };
   visa: {
     [key: string]: VisaCategoryDetails | undefined;
   };
   files?: CountryFile[];
+  formalities?: string[];
 }
 
 export interface CountriesData {

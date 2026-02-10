@@ -9,7 +9,6 @@ const DEFAULT_VISA_DETAILS: VisaCategoryDetails = {
     description: '',
     requirements: [''],
     process: [''],
-    formalities: [''],
     duration: '',
     cost: '',
     checklists: [],
@@ -28,6 +27,7 @@ const AdminCountryForm: React.FC = () => {
     const [top, setTop] = useState<number>(0);
     const [left, setLeft] = useState<number>(0);
     const [files, setFiles] = useState<CountryFile[]>([]);
+    const [countryFormalities, setCountryFormalities] = useState<string[]>(['']);
 
     // Visa Data
     const [visaData, setVisaData] = useState<Record<string, VisaCategoryDetails>>({});
@@ -78,22 +78,38 @@ const AdminCountryForm: React.FC = () => {
         }));
     };
 
-    const updateArrayField = (type: string, field: 'requirements' | 'process' | 'formalities', index: number, value: string) => {
+    const updateArrayField = (type: string, field: 'requirements' | 'process', index: number, value: string) => {
         const list = [...(visaData[type][field] || [])];
         list[index] = value;
         updateVisaDetail(type, field, list);
     };
 
-    const addArrayItem = (type: string, field: 'requirements' | 'process' | 'formalities') => {
+    const addArrayItem = (type: string, field: 'requirements' | 'process') => {
         const list = [...(visaData[type][field] || [])];
         list.push('');
         updateVisaDetail(type, field, list);
     };
 
-    const removeArrayItem = (type: string, field: 'requirements' | 'process' | 'formalities', index: number) => {
+    const removeArrayItem = (type: string, field: 'requirements' | 'process', index: number) => {
         const list = [...(visaData[type][field] || [])];
         list.splice(index, 1);
         updateVisaDetail(type, field, list);
+    };
+
+    const updateCountryFormality = (index: number, value: string) => {
+        const list = [...countryFormalities];
+        list[index] = value;
+        setCountryFormalities(list);
+    };
+
+    const addCountryFormality = () => {
+        setCountryFormalities([...countryFormalities, '']);
+    };
+
+    const removeCountryFormality = (index: number) => {
+        const list = [...countryFormalities];
+        list.splice(index, 1);
+        setCountryFormalities(list);
     };
 
     const handleSave = async () => {
@@ -111,7 +127,8 @@ const AdminCountryForm: React.FC = () => {
                 code,
                 coordinates: { top, left },
                 visa: visaData as any,
-                files: files
+                files: files,
+                formalities: countryFormalities.filter(f => f.trim() !== '')
             };
 
             await setDoc(doc(db, 'countries', countryId.toLowerCase()), data);
@@ -140,6 +157,7 @@ const AdminCountryForm: React.FC = () => {
                 setLeft(data.coordinates?.left || 0);
                 setVisaData(data.visa as any || {});
                 setFiles(data.files || []);
+                setCountryFormalities(data.formalities || ['']);
                 setStatus('Loaded existing data.');
             } else {
                 setStatus('No existing data found for this ID. Creating new.');
@@ -263,6 +281,32 @@ const AdminCountryForm: React.FC = () => {
                             </button>
                         </div>
                     </div>
+
+                    {/* Country Formalities */}
+                    <div className="space-y-6">
+                        <h2 className="text-xl font-bold text-slate-900 border-b pb-2">Common Formalities</h2>
+                        <div className="space-y-3">
+                            {countryFormalities.map((item, idx) => (
+                                <div key={idx} className="flex gap-2">
+                                    <input
+                                        value={item}
+                                        onChange={(e) => updateCountryFormality(idx, e.target.value)}
+                                        className="w-full p-3 rounded-xl border text-sm"
+                                        placeholder="Add formality item..."
+                                    />
+                                    <button onClick={() => removeCountryFormality(idx)} className="text-slate-400 hover:text-red-500">
+                                        <Trash2 className="h-5 w-5" />
+                                    </button>
+                                </div>
+                            ))}
+                            <button
+                                onClick={addCountryFormality}
+                                className="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl font-bold text-sm flex items-center justify-center gap-2"
+                            >
+                                <Plus className="h-4 w-4" /> Add Formality
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
@@ -349,7 +393,7 @@ const AdminCountryForm: React.FC = () => {
                                 </div>
 
                                 {/* Array Fields */}
-                                {(['requirements', 'process', 'formalities'] as const).map(field => (
+                                {(['requirements', 'process'] as const).map(field => (
                                     <div key={field}>
                                         <label className="block text-xs uppercase font-bold text-slate-400 mb-2">{field}</label>
                                         <div className="space-y-2">
