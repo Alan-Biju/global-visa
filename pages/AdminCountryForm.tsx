@@ -1,19 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../firebase';
-import { VisaType, CountryData, VisaCategoryDetails, CountryFile } from '../types';
+import { VisaType, CountryData, VisaCategoryDetails, CountryFile, ChecklistItem, DownloadItem } from '../types';
 import { Trash2, Plus, Save, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
+
+const DEFAULT_FORMALITIES = [
+    'Immigration check upon arrival',
+    'Local police reporting within 14 days of entry',
+    'Register at nearest Foreigners Regional Registration Office (FRRO)',
+    'Carry printed visa approval and travel documents at all times'
+];
 
 const DEFAULT_VISA_DETAILS: VisaCategoryDetails = {
     description: '',
     requirements: [''],
-    process: [''],
-    duration: '',
-    cost: '',
     checklists: [],
     downloads: [],
-    photoSpecs: ''
+    photoSpecs: '',
+    files: [],
+    formalities: [...DEFAULT_FORMALITIES]
 };
 
 const AdminCountryForm: React.FC = () => {
@@ -78,22 +84,88 @@ const AdminCountryForm: React.FC = () => {
         }));
     };
 
-    const updateArrayField = (type: string, field: 'requirements' | 'process', index: number, value: string) => {
+    const updateArrayField = (type: string, field: 'requirements', index: number, value: string) => {
         const list = [...(visaData[type][field] || [])];
         list[index] = value;
         updateVisaDetail(type, field, list);
     };
 
-    const addArrayItem = (type: string, field: 'requirements' | 'process') => {
+    const addArrayItem = (type: string, field: 'requirements') => {
         const list = [...(visaData[type][field] || [])];
         list.push('');
         updateVisaDetail(type, field, list);
     };
 
-    const removeArrayItem = (type: string, field: 'requirements' | 'process', index: number) => {
+    const removeArrayItem = (type: string, field: 'requirements', index: number) => {
         const list = [...(visaData[type][field] || [])];
         list.splice(index, 1);
         updateVisaDetail(type, field, list);
+    };
+
+    // Per-visa-type files helpers
+    const addVisaFile = (type: string) => {
+        const currentFiles = visaData[type].files || [];
+        updateVisaDetail(type, 'files', [...currentFiles, { name: '', url: '' }]);
+    };
+
+    const updateVisaFile = (type: string, index: number, field: keyof CountryFile, value: string) => {
+        const currentFiles = [...(visaData[type].files || [])];
+        currentFiles[index] = { ...currentFiles[index], [field]: value };
+        updateVisaDetail(type, 'files', currentFiles);
+    };
+
+    const removeVisaFile = (type: string, index: number) => {
+        const currentFiles = [...(visaData[type].files || [])];
+        currentFiles.splice(index, 1);
+        updateVisaDetail(type, 'files', currentFiles);
+    };
+
+    // Checklist helpers
+    const addChecklist = (type: string) => {
+        const list = visaData[type].checklists || [];
+        updateVisaDetail(type, 'checklists', [...list, { label: '', url: '' }]);
+    };
+    const updateChecklist = (type: string, index: number, field: keyof ChecklistItem, value: string) => {
+        const list = [...(visaData[type].checklists || [])];
+        list[index] = { ...list[index], [field]: value };
+        updateVisaDetail(type, 'checklists', list);
+    };
+    const removeChecklist = (type: string, index: number) => {
+        const list = [...(visaData[type].checklists || [])];
+        list.splice(index, 1);
+        updateVisaDetail(type, 'checklists', list);
+    };
+
+    // Download helpers
+    const addDownload = (type: string) => {
+        const list = visaData[type].downloads || [];
+        updateVisaDetail(type, 'downloads', [...list, { label: '', url: '', description: '', isExternal: false }]);
+    };
+    const updateDownload = (type: string, index: number, field: string, value: any) => {
+        const list = [...(visaData[type].downloads || [])];
+        list[index] = { ...list[index], [field]: value };
+        updateVisaDetail(type, 'downloads', list);
+    };
+    const removeDownload = (type: string, index: number) => {
+        const list = [...(visaData[type].downloads || [])];
+        list.splice(index, 1);
+        updateVisaDetail(type, 'downloads', list);
+    };
+
+    // Per-visa formalities helpers
+    const addVisaFormality = (type: string) => {
+        const list = visaData[type].formalities || [];
+        updateVisaDetail(type, 'formalities', [...list, '']);
+    };
+    const updateVisaFormality = (type: string, index: number, value: string) => {
+        const list = [...(visaData[type].formalities || [])];
+        list[index] = value;
+        updateVisaDetail(type, 'formalities', list);
+    };
+    const removeVisaFormality = (type: string, index: number) => {
+        const list = [...(visaData[type].formalities || [])];
+        list.splice(index, 1);
+        updateVisaDetail(type, 'formalities', list);
     };
 
     const updateCountryFormality = (index: number, value: string) => {
@@ -110,6 +182,55 @@ const AdminCountryForm: React.FC = () => {
         const list = [...countryFormalities];
         list.splice(index, 1);
         setCountryFormalities(list);
+    };
+
+    const handleMapClick = (e: React.MouseEvent<HTMLDivElement>) => {
+        const rect = e.currentTarget.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        const leftPercent = Math.round((x / rect.width) * 100);
+        const topPercent = Math.round((y / rect.height) * 100);
+
+        setLeft(leftPercent);
+        setTop(topPercent);
+    };
+
+    const handleDelete = async () => {
+        if (!countryId) {
+            setStatus("Error: Enter a Country ID to delete.");
+            return;
+        }
+
+        const confirmDelete = window.confirm(
+            `ARE YOU ABSOLUTELY SURE?\n\nThis will permanently DELETE all data for "${name || countryId}" from the database.\n\nThis action CANNOT be undone.`
+        );
+
+        if (!confirmDelete) return;
+
+        setLoading(true);
+        setStatus('Deleting...');
+
+        try {
+            await deleteDoc(doc(db, 'countries', countryId.toLowerCase()));
+
+            // Reset form
+            setCountryId('');
+            setName('');
+            setCode('');
+            setTop(0);
+            setLeft(0);
+            setVisaData({});
+            setFiles([]);
+            setCountryFormalities(['']);
+
+            setStatus('Country deleted successfully.');
+        } catch (error: any) {
+            console.error("Error deleting:", error);
+            setStatus(`Error: ${error.message}`);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleSave = async () => {
@@ -203,6 +324,13 @@ const AdminCountryForm: React.FC = () => {
                                     placeholder="unique-id"
                                 />
                                 <button onClick={loadExisting} className="px-4 py-2 bg-slate-200 rounded-xl font-bold text-slate-600 hover:bg-slate-300">Load</button>
+                                <button
+                                    onClick={handleDelete}
+                                    disabled={loading || !countryId}
+                                    className="px-4 py-2 bg-red-100 rounded-xl font-bold text-red-600 hover:bg-red-200 transition-colors disabled:opacity-50"
+                                >
+                                    Delete
+                                </button>
                             </div>
                         </div>
 
@@ -244,6 +372,45 @@ const AdminCountryForm: React.FC = () => {
                                     className="w-full p-3 border rounded-xl"
                                 />
                             </div>
+                        </div>
+
+                        {/* Map Picker Tool */}
+                        <div className="mt-6">
+                            <label className="block text-sm font-bold text-slate-500 mb-3">Interactive Map Picker (Click to set coordinates)</label>
+                            <div
+                                onClick={handleMapClick}
+                                className="relative w-full aspect-[16/9] bg-slate-900 rounded-2xl border-2 border-slate-200 shadow-inner overflow-hidden cursor-crosshair group"
+                            >
+                                {/* Map Background (Matching Home.tsx) */}
+                                <img
+                                    src="https://upload.wikimedia.org/wikipedia/commons/e/ec/World_map_blank_without_borders.svg"
+                                    alt="World Map Interface"
+                                    className="absolute inset-0 w-full h-full object-cover opacity-20 invert brightness-50 contrast-125 select-none pointer-events-none"
+                                />
+
+                                {/* Coordinate Guidelines */}
+                                <div className="absolute inset-0 opacity-10 pointer-events-none">
+                                    <div className="absolute left-1/2 top-0 bottom-0 w-px bg-white"></div>
+                                    <div className="absolute top-1/2 left-0 right-0 h-px bg-white"></div>
+                                </div>
+
+                                {/* Active Marker */}
+                                <div
+                                    className="absolute w-4 h-4 -translate-x-1/2 -translate-y-1/2 pointer-events-none transition-all duration-200"
+                                    style={{ top: `${top}%`, left: `${left}%` }}
+                                >
+                                    <span className="absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75 animate-ping"></span>
+                                    <span className="relative inline-flex rounded-full h-4 w-4 bg-indigo-600 border-2 border-white shadow-lg"></span>
+                                </div>
+
+                                {/* Dynamic Coordinate Display */}
+                                <div className="absolute bottom-2 right-3 bg-slate-900/80 backdrop-blur-sm text-[10px] text-white font-mono px-2 py-1 rounded-md border border-white/10 pointer-events-none">
+                                    TOP: {top}% | LEFT: {left}%
+                                </div>
+                            </div>
+                            <p className="mt-2 text-xs text-slate-400 italic">
+                                * The marker shows where the point will appear on the homepage world map.
+                            </p>
                         </div>
                     </div>
 
@@ -373,49 +540,142 @@ const AdminCountryForm: React.FC = () => {
                                     />
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-xs uppercase font-bold text-slate-400 mb-1">Duration</label>
-                                        <input
-                                            value={details.duration}
-                                            onChange={(e) => updateVisaDetail(type, 'duration', e.target.value)}
-                                            className="w-full p-3 rounded-xl border"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs uppercase font-bold text-slate-400 mb-1">Cost</label>
-                                        <input
-                                            value={details.cost}
-                                            onChange={(e) => updateVisaDetail(type, 'cost', e.target.value)}
-                                            className="w-full p-3 rounded-xl border"
-                                        />
+                                {/* Requirements */}
+                                <div>
+                                    <label className="block text-xs uppercase font-bold text-slate-400 mb-2">Requirements</label>
+                                    <div className="space-y-2">
+                                        {(details.requirements || []).map((item, idx) => (
+                                            <div key={idx} className="flex gap-2">
+                                                <input
+                                                    value={item}
+                                                    onChange={(e) => updateArrayField(type, 'requirements', idx, e.target.value)}
+                                                    className="w-full p-3 rounded-xl border text-sm"
+                                                    placeholder="Add requirement item..."
+                                                />
+                                                <button onClick={() => removeArrayItem(type, 'requirements', idx)} className="text-slate-400 hover:text-red-500">
+                                                    <Trash2 className="h-5 w-5" />
+                                                </button>
+                                            </div>
+                                        ))}
+                                        <button onClick={() => addArrayItem(type, 'requirements')} className="text-indigo-600 text-sm font-bold flex items-center gap-1 hover:underline">
+                                            <Plus className="h-4 w-4" /> Add Requirement
+                                        </button>
                                     </div>
                                 </div>
 
-                                {/* Array Fields */}
-                                {(['requirements', 'process'] as const).map(field => (
-                                    <div key={field}>
-                                        <label className="block text-xs uppercase font-bold text-slate-400 mb-2">{field}</label>
-                                        <div className="space-y-2">
-                                            {(details[field] || []).map((item, idx) => (
-                                                <div key={idx} className="flex gap-2">
+                                {/* Per-Visa-Type Files */}
+                                <div>
+                                    <label className="block text-xs uppercase font-bold text-slate-400 mb-2">Files (Per Visa Type)</label>
+                                    <div className="space-y-3">
+                                        {(details.files || []).length === 0 && <p className="text-slate-400 italic text-sm">No files added for this visa type.</p>}
+                                        {(details.files || []).map((file, idx) => (
+                                            <div key={idx} className="flex gap-2 items-center bg-white p-2 rounded-xl border">
+                                                <div className="flex-1 grid gap-2">
                                                     <input
-                                                        value={item}
-                                                        onChange={(e) => updateArrayField(type, field, idx, e.target.value)}
-                                                        className="w-full p-3 rounded-xl border text-sm"
-                                                        placeholder={`Add ${field} item...`}
+                                                        value={file.name}
+                                                        onChange={(e) => updateVisaFile(type, idx, 'name', e.target.value)}
+                                                        className="w-full p-2 border rounded-lg text-sm"
+                                                        placeholder="File Name (e.g. Application Form)"
                                                     />
-                                                    <button onClick={() => removeArrayItem(type, field, idx)} className="text-slate-400 hover:text-red-500">
+                                                    <input
+                                                        value={file.url}
+                                                        onChange={(e) => updateVisaFile(type, idx, 'url', e.target.value)}
+                                                        className="w-full p-2 border rounded-lg text-sm"
+                                                        placeholder="File URL (Google Drive etc.)"
+                                                    />
+                                                </div>
+                                                <button onClick={() => removeVisaFile(type, idx)} className="text-red-400 hover:text-red-600 p-2">
+                                                    <Trash2 className="h-5 w-5" />
+                                                </button>
+                                            </div>
+                                        ))}
+                                        <button
+                                            onClick={() => addVisaFile(type)}
+                                            className="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl font-bold text-sm flex items-center justify-center gap-2"
+                                        >
+                                            <Plus className="h-4 w-4" /> Add File
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Checklists */}
+                                <div>
+                                    <label className="block text-xs uppercase font-bold text-slate-400 mb-2">Checklists (Label + URL)</label>
+                                    <div className="space-y-3">
+                                        {(details.checklists || []).length === 0 && <p className="text-slate-400 italic text-sm">No checklists added.</p>}
+                                        {(details.checklists || []).map((item, idx) => (
+                                            <div key={idx} className="flex gap-2 items-center bg-white p-2 rounded-xl border">
+                                                <div className="flex-1 grid gap-2">
+                                                    <input
+                                                        value={item.label}
+                                                        onChange={(e) => updateChecklist(type, idx, 'label', e.target.value)}
+                                                        className="w-full p-2 border rounded-lg text-sm"
+                                                        placeholder="Checklist Label"
+                                                    />
+                                                    <input
+                                                        value={item.url}
+                                                        onChange={(e) => updateChecklist(type, idx, 'url', e.target.value)}
+                                                        className="w-full p-2 border rounded-lg text-sm"
+                                                        placeholder="Checklist URL"
+                                                    />
+                                                </div>
+                                                <button onClick={() => removeChecklist(type, idx)} className="text-red-400 hover:text-red-600 p-2">
+                                                    <Trash2 className="h-5 w-5" />
+                                                </button>
+                                            </div>
+                                        ))}
+                                        <button onClick={() => addChecklist(type)} className="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl font-bold text-sm flex items-center justify-center gap-2">
+                                            <Plus className="h-4 w-4" /> Add Checklist
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Downloads */}
+                                <div>
+                                    <label className="block text-xs uppercase font-bold text-slate-400 mb-2">Downloads (Label, URL, Description, External?)</label>
+                                    <div className="space-y-3">
+                                        {(details.downloads || []).length === 0 && <p className="text-slate-400 italic text-sm">No downloads added.</p>}
+                                        {(details.downloads || []).map((item, idx) => (
+                                            <div key={idx} className="bg-white p-3 rounded-xl border space-y-2">
+                                                <div className="flex gap-2">
+                                                    <input
+                                                        value={item.label}
+                                                        onChange={(e) => updateDownload(type, idx, 'label', e.target.value)}
+                                                        className="flex-1 p-2 border rounded-lg text-sm"
+                                                        placeholder="Label (e.g. India e-Visa Guide)"
+                                                    />
+                                                    <button onClick={() => removeDownload(type, idx)} className="text-red-400 hover:text-red-600 p-1">
                                                         <Trash2 className="h-5 w-5" />
                                                     </button>
                                                 </div>
-                                            ))}
-                                            <button onClick={() => addArrayItem(type, field)} className="text-indigo-600 text-sm font-bold flex items-center gap-1 hover:underline">
-                                                <Plus className="h-4 w-4" /> Add Item
-                                            </button>
-                                        </div>
+                                                <input
+                                                    value={item.url}
+                                                    onChange={(e) => updateDownload(type, idx, 'url', e.target.value)}
+                                                    className="w-full p-2 border rounded-lg text-sm"
+                                                    placeholder="URL (e.g. https://indianvisaonline.gov.in/)"
+                                                />
+                                                <input
+                                                    value={item.description || ''}
+                                                    onChange={(e) => updateDownload(type, idx, 'description', e.target.value)}
+                                                    className="w-full p-2 border rounded-lg text-sm"
+                                                    placeholder="Description (e.g. Official e-Visa portal redirect)"
+                                                />
+                                                <label className="flex items-center gap-2 text-sm font-bold text-slate-500 cursor-pointer">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={item.isExternal || false}
+                                                        onChange={(e) => updateDownload(type, idx, 'isExternal', e.target.checked)}
+                                                        className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                                                    />
+                                                    External Link (opens in new tab with globe icon)
+                                                </label>
+                                            </div>
+                                        ))}
+                                        <button onClick={() => addDownload(type)} className="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl font-bold text-sm flex items-center justify-center gap-2">
+                                            <Plus className="h-4 w-4" /> Add Link
+                                        </button>
                                     </div>
-                                ))}
+                                </div>
 
                             </div>
                         </div>
@@ -433,8 +693,8 @@ const AdminCountryForm: React.FC = () => {
                     </button>
                 </div>
 
-            </div>
-        </div>
+            </div >
+        </div >
     );
 };
 

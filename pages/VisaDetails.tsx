@@ -7,7 +7,7 @@ import { useCountries } from '../hooks/useCountries';
 import {
   Download, ArrowLeft, Info, ClipboardList, ShieldAlert,
   Clock, CheckCircle2, Share2, MessageSquareText,
-  FileText, Camera, ExternalLink, ListChecks, Globe
+  FileText, Camera, ExternalLink, ListChecks, Globe, Phone
 } from 'lucide-react';
 import SEO from '../components/SEO';
 
@@ -145,39 +145,57 @@ const VisaDetails: React.FC = () => {
               {detailsState.originName} <span className="text-indigo-500">➝</span> {detailsState.destinationName}
             </p>
           </div>
-          <div className="relative z-10 grid grid-cols-2 gap-4">
-            <div className="bg-emerald-50 dark:bg-emerald-900/40 p-4 rounded-2xl border border-emerald-100 dark:border-emerald-800/50 min-w-[140px]">
-              <p className="text-[10px] font-black uppercase text-emerald-400">Cost</p>
-              <button
-                onClick={() => navigate('/query', { state: { destination: countryData.name } })}
-                className="mt-1 bg-emerald-500 text-white px-3 py-1 rounded-lg text-xs font-bold hover:bg-emerald-600 transition-colors shadow-lg shadow-emerald-500/20"
-              >
-                Query
-              </button>
-            </div>
-          </div>
         </div>
 
         {/* E-Visa Special Header Notification */}
         {isEVisa && (
-          <div className="bg-indigo-600 rounded-3xl p-8 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-6 overflow-hidden relative group">
-            <div className="absolute top-0 right-0 -mt-8 -mr-8 w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
-            <div className="flex items-center gap-4">
-              <div className="bg-white/20 p-4 rounded-2xl backdrop-blur-sm">
-                <Info className="h-8 w-8 text-white" />
+          <div className="bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-700 rounded-3xl p-10 text-white shadow-2xl overflow-hidden relative group">
+            <div className="absolute top-0 right-0 -mt-8 -mr-8 w-40 h-40 bg-white/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
+            <div className="absolute bottom-0 left-0 -mb-12 -ml-12 w-32 h-32 bg-purple-400/20 rounded-full blur-3xl"></div>
+            <div className="relative z-10 space-y-6">
+              <div className="flex items-start gap-5">
+                <div className="bg-white/20 p-4 rounded-2xl backdrop-blur-sm shrink-0">
+                  <ShieldAlert className="h-10 w-10 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-2xl md:text-3xl font-black tracking-tight leading-tight">We Handle Everything for You</h3>
+                  <p className="text-indigo-200 font-bold mt-1 text-lg">Complete E-Visa Processing Support — Start to Finish</p>
+                </div>
               </div>
-              <div>
-                <h3 className="text-2xl font-black tracking-tight">Instant E-Visa Protocol</h3>
-                <p className="text-indigo-100 font-bold">Contact our administrator for the comprehensive digital application dossier.</p>
+
+              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/10">
+                <p className="text-indigo-100 font-bold text-base leading-relaxed italic">
+                  "Avoid online mistakes — let our experts file your E-Visa properly."
+                </p>
+              </div>
+
+              <div className="bg-red-500/20 backdrop-blur-sm rounded-2xl p-6 border border-red-400/20">
+                <h4 className="text-xl font-black tracking-tight flex items-center gap-2">
+                  <Info className="h-5 w-5" />
+                  E-VISA? Don't Take Risks Online
+                </h4>
+                <p className="text-indigo-100 font-bold mt-2 leading-relaxed">
+                  We handle your complete E-Visa application — document verification, correct form filling & submission support.
+                </p>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-4">
+                <button
+                  onClick={() => navigate('/query', { state: { destination: countryData.name } })}
+                  className="bg-white text-indigo-600 px-8 py-4 rounded-2xl font-black hover:bg-indigo-50 transition-all flex items-center gap-3 shadow-xl hover:-translate-y-1 justify-center"
+                >
+                  Contact Our Experts
+                  <ExternalLink className="h-5 w-5" />
+                </button>
+                <a
+                  href="tel:9845057744"
+                  className="bg-emerald-500 text-white px-8 py-4 rounded-2xl font-black hover:bg-emerald-400 transition-all flex items-center gap-3 shadow-xl shadow-emerald-500/30 hover:-translate-y-1 justify-center"
+                >
+                  <Phone className="h-5 w-5" />
+                  98450 57744
+                </a>
               </div>
             </div>
-            <button
-              onClick={() => navigate('/query', { state: { destination: countryData.name } })}
-              className="bg-white text-indigo-600 px-8 py-4 rounded-2xl font-black hover:bg-indigo-50 transition-all flex items-center gap-2 shadow-lg hover:-translate-y-1"
-            >
-              Contact Owner
-              <ExternalLink className="h-4 w-4" />
-            </button>
           </div>
         )}
 
@@ -341,18 +359,33 @@ const VisaDetails: React.FC = () => {
                     })}
                 </div>
 
-                {/* Generic fallback items if no specific downloads exist, or extra regulatory declarations */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+                {/* Per-visa-type files */}
+                {!!((visaDetails.files || []).length) && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+                    {(visaDetails.files || []).map((file, i) => (
+                      <a key={`visa-file-${i}`} href={file.url} target="_blank" className="flex items-center gap-5 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 hover:border-indigo-500 transition-all font-black text-sm uppercase tracking-tight text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 group shadow-sm">
+                        <div className="p-3 bg-slate-50 dark:bg-slate-900 rounded-xl group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                          <FileText className="h-5 w-5" />
+                        </div>
+                        {file.name}
+                      </a>
+                    ))}
+                  </div>
+                )}
 
-                  {(countryData?.files || []).map((file, i) => (
-                    <a key={`country-file-${i}`} href={file.url} target="_blank" className="flex items-center gap-5 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 hover:border-indigo-500 transition-all font-black text-sm uppercase tracking-tight text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 group shadow-sm">
-                      <div className="p-3 bg-slate-50 dark:bg-slate-900 rounded-xl group-hover:bg-indigo-600 group-hover:text-white transition-colors">
-                        <FileText className="h-5 w-5" />
-                      </div>
-                      {file.name}
-                    </a>
-                  ))}
-                </div>
+                {/* Country-level files */}
+                {!!((countryData?.files || []).length) && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+                    {(countryData?.files || []).map((file, i) => (
+                      <a key={`country-file-${i}`} href={file.url} target="_blank" className="flex items-center gap-5 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 hover:border-indigo-500 transition-all font-black text-sm uppercase tracking-tight text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 group shadow-sm">
+                        <div className="p-3 bg-slate-50 dark:bg-slate-900 rounded-xl group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                          <FileText className="h-5 w-5" />
+                        </div>
+                        {file.name}
+                      </a>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
@@ -360,7 +393,14 @@ const VisaDetails: React.FC = () => {
               <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
                 <h2 className="text-xl font-black mb-10 tracking-tight">Mandatory Post-Entry Formalities</h2>
                 <div className="grid gap-6">
-                  {(countryData.formalities || []).map((item, i) => (
+                  {[
+                    'Complete immigration and customs declaration upon arrival at the port of entry.',
+                    'Register with the local police or Foreigners Regional Registration Office (FRRO) within 14 days of arrival, if applicable.',
+                    'Carry a printed copy of your visa approval, return tickets, and hotel bookings at all times during your stay.',
+                    'Ensure passport validity of at least 6 months beyond your planned date of departure from the destination country.',
+                    'Report any change of address or accommodation to the nearest immigration authority during your stay.',
+                    'Comply with all local laws and regulations regarding employment, travel restrictions, and currency declarations.'
+                  ].map((item, i) => (
                     <div key={i} className="p-8 bg-slate-50 dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 font-bold text-lg text-slate-700 dark:text-slate-300 leading-relaxed shadow-sm">
                       {item}
                     </div>
@@ -381,13 +421,22 @@ const VisaDetails: React.FC = () => {
                 If your documentation is non-standard or you require executive consular handling, our experts at <span className="text-white">Flyconnect</span> are ready to initialize a custom submission protocol.
               </p>
             </div>
-            <button
-              onClick={() => navigate('/query', { state: { destination: countryData.name } })}
-              className="shrink-0 flex items-center gap-4 bg-white text-indigo-600 px-12 py-6 rounded-2xl font-black text-xl shadow-2xl hover:bg-indigo-50 transition-all hover:scale-105 active:scale-95 group/btn"
-            >
-              <MessageSquareText className="h-7 w-7 transition-transform group-hover/btn:rotate-12" />
-              Initialize Support
-            </button>
+            <div className="flex flex-col gap-4 shrink-0">
+              <button
+                onClick={() => navigate('/query', { state: { destination: countryData.name } })}
+                className="flex items-center gap-4 bg-white text-indigo-600 px-12 py-6 rounded-2xl font-black text-xl shadow-2xl hover:bg-indigo-50 transition-all hover:scale-105 active:scale-95 group/btn"
+              >
+                <MessageSquareText className="h-7 w-7 transition-transform group-hover/btn:rotate-12" />
+                Initialize Support
+              </button>
+              <a
+                href="tel:9845057744"
+                className="flex items-center justify-center gap-3 bg-emerald-500 text-white px-12 py-5 rounded-2xl font-black text-lg shadow-xl shadow-emerald-500/30 hover:bg-emerald-400 transition-all hover:scale-105 active:scale-95"
+              >
+                <Phone className="h-6 w-6" />
+                98450 57744
+              </a>
+            </div>
           </div>
         </div>
       </div >

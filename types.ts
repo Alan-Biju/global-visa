@@ -24,13 +24,14 @@ export interface DownloadItem {
 export interface VisaCategoryDetails {
   description: string;
   requirements: string[];
-  process: string[];
+  process?: string[];
   formalities?: string[];
-  duration: string;
-  cost: string;
+  duration?: string;
+  cost?: string;
   checklists?: ChecklistItem[]; // Array of document labels and their specific URLs
   downloads?: DownloadItem[];   // Dynamic list of manuals, guides, and portal redirects
   photoSpecs?: string;          // Custom photo requirement text
+  files?: CountryFile[];         // Per-visa-type downloadable files
 }
 
 export interface CountryFile {
@@ -48,6 +49,7 @@ export interface CountryData {
   };
   files?: CountryFile[];
   formalities?: string[];
+  phoneNumber?: string;
 }
 
 export interface CountriesData {
