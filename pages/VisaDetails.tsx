@@ -391,17 +391,19 @@ const VisaDetails: React.FC = () => {
 
             {activeTab === 'formalities' && (
               <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-                <h2 className="text-xl font-black mb-10 tracking-tight">Mandatory Post-Entry Formalities</h2>
-                <div className="grid gap-6">
+                <h2 className="text-3xl font-black mb-2 tracking-tight">FORMALITIES</h2>
+                <h3 className="text-xl font-bold mb-8 text-indigo-600">Professional Assurance Lines</h3>
+                <div className="grid gap-4">
                   {[
-                    'Complete immigration and customs declaration upon arrival at the port of entry.',
-                    'Register with the local police or Foreigners Regional Registration Office (FRRO) within 14 days of arrival, if applicable.',
-                    'Carry a printed copy of your visa approval, return tickets, and hotel bookings at all times during your stay.',
-                    'Ensure passport validity of at least 6 months beyond your planned date of departure from the destination country.',
-                    'Report any change of address or accommodation to the nearest immigration authority during your stay.',
-                    'Comply with all local laws and regulations regarding employment, travel restrictions, and currency declarations.'
+                    'From our side, your file will be prepared with complete accuracy and embassy-ready standards.',
+                    'We follow a strict document verification process to maximize your approval chances.',
+                    'Your application will be handled by experienced visa documentation specialists.',
+                    'We submit only well-reviewed and properly structured visa files.',
+                    'We guide you step-by-step to avoid common rejection mistakes.',
+                    'We don’t take shortcuts — we build strong, genuine applications.'
                   ].map((item, i) => (
-                    <div key={i} className="p-8 bg-slate-50 dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 font-bold text-lg text-slate-700 dark:text-slate-300 leading-relaxed shadow-sm">
+                    <div key={i} className="flex gap-4 p-6 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 font-bold text-lg text-slate-700 dark:text-slate-300 leading-relaxed shadow-sm group hover:scale-[1.02] transition-transform">
+                      <div className="bg-indigo-600 w-2 h-2 rounded-full mt-3 shrink-0"></div>
                       {item}
                     </div>
                   ))}
