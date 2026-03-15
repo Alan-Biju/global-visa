@@ -2,11 +2,12 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useLocation, Navigate, Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { UserSelection, VisaType } from '../types';
-import { COUNTRIES_DATA, GLOBAL_DRIVE_URL } from '../constants';
-import { 
-  Download, ArrowLeft, Info, ClipboardList, ShieldAlert, 
-  Clock, CheckCircle2, Share2, MessageSquareText, 
-  FileText, Camera, ExternalLink, ListChecks, Globe 
+import { GLOBAL_DRIVE_URL } from '../constants';
+import { useCountries } from '../hooks/useCountries';
+import {
+  Download, ArrowLeft, Info, ClipboardList, ShieldAlert,
+  Clock, CheckCircle2, Share2, MessageSquareText,
+  FileText, Camera, ExternalLink, ListChecks, Globe, Phone
 } from 'lucide-react';
 import SEO from '../components/SEO';
 
@@ -14,11 +15,14 @@ const VisaDetails: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { data: countriesData, loading: countriesLoading } = useCountries();
   const [detailsState, setDetailsState] = useState<UserSelection | null>(null);
   const [copySuccess, setCopySuccess] = useState(false);
   const [activeTab, setActiveTab] = useState<'requirements' | 'photos' | 'downloads' | 'formalities'>('requirements');
 
   useEffect(() => {
+    if (countriesLoading) return;
+
     if (location.state && (location.state as any).originId) {
       setDetailsState(location.state as UserSelection);
     } else {
@@ -27,10 +31,10 @@ const VisaDetails: React.FC = () => {
       const visaTypeParam = searchParams.get('type');
 
       if (originId && destinationId && visaTypeParam) {
-        const originCountry = COUNTRIES_DATA[originId];
-        const destCountry = COUNTRIES_DATA[destinationId];
+        const originCountry = countriesData[originId];
+        const destCountry = countriesData[destinationId];
         const decodedType = decodeURIComponent(visaTypeParam);
-        const isValidType = Object.values(VisaType).includes(decodedType as VisaType);
+        const isValidType = destCountry && !!destCountry.visa[decodedType];
 
         if (originCountry && destCountry && isValidType) {
           setDetailsState({
@@ -43,23 +47,58 @@ const VisaDetails: React.FC = () => {
         }
       }
     }
-  }, [location.state, searchParams]);
+  }, [location.state, searchParams, countriesLoading, countriesData]);
 
-  const countryData = useMemo(() => 
-    detailsState ? COUNTRIES_DATA[detailsState.destinationId] : null
-  , [detailsState]);
+  const countryData = useMemo(() =>
+    (detailsState && !countriesLoading) ? countriesData[detailsState.destinationId] : null
+    , [detailsState, countriesLoading, countriesData]);
 
-  const visaDetails = useMemo(() => 
+  const visaDetails = useMemo(() =>
     (countryData && detailsState) ? countryData.visa[detailsState.visaType] : null
-  , [countryData, detailsState]);
+    , [countryData, detailsState]);
+
+  const isEVisa = useMemo(() => {
+    if (!detailsState) return false;
+    const type = detailsState.visaType.toLowerCase();
+    return type.includes('e-visa') || type.includes('e visa');
+  }, [detailsState]);
+
+  const tabs = useMemo(() => {
+    const baseTabs = [
+      { id: 'requirements', label: 'Requirements', icon: ClipboardList },
+      { id: 'photos', label: 'Photo Specs', icon: Camera },
+      { id: 'downloads', label: 'Downloads', icon: Download },
+      { id: 'formalities', label: 'Formalities', icon: Info },
+    ] as const;
+
+    if (isEVisa) {
+      return baseTabs.filter(t => t.id !== 'requirements');
+    }
+    return baseTabs;
+  }, [isEVisa]);
+
+  useEffect(() => {
+    if (isEVisa && activeTab === 'requirements') {
+      setActiveTab('photos');
+    }
+  }, [isEVisa, activeTab]);
+
+  if (countriesLoading) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-900">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mb-4"></div>
+        <p className="text-slate-500 font-medium animate-pulse">Initializing Secure Dossier...</p>
+      </div>
+    );
+  }
 
   if (!detailsState && !searchParams.has('origin')) return <Navigate to="/service" replace />;
 
   if (!detailsState || !countryData || !visaDetails) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-900">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mb-4"></div>
-        <p className="text-slate-500 font-medium animate-pulse">Initializing Secure Dossier...</p>
+        <p className="text-slate-500 font-medium">Data not found. Please try again.</p>
+        <Link to="/service" className="mt-4 text-indigo-600 font-bold hover:underline">Return to Assessment</Link>
       </div>
     );
   }
@@ -77,21 +116,15 @@ const VisaDetails: React.FC = () => {
     }
   };
 
-  const tabs = [
-    { id: 'requirements', label: 'Requirements', icon: ClipboardList },
-    { id: 'photos', label: 'Photo Specs', icon: Camera },
-    { id: 'downloads', label: 'Downloads', icon: Download },
-    { id: 'formalities', label: 'Formalities', icon: Info },
-  ] as const;
 
   return (
     <div className="min-h-screen py-10 px-4 sm:px-6 bg-slate-50 dark:bg-slate-900 transition-colors duration-300">
-      <SEO 
+      <SEO
         title={`${detailsState.visaType} to ${detailsState.destinationName} - Flyconnect`}
         description={`Full checklist and requirements for ${detailsState.visaType} for ${detailsState.destinationName}.`}
       />
       <div className="max-w-7xl mx-auto space-y-8">
-        
+
         {/* Nav & Header */}
         <div className="flex flex-wrap justify-between items-center gap-4">
           <Link to="/service" className="inline-flex items-center text-slate-500 hover:text-indigo-600 transition-colors font-bold group">
@@ -105,20 +138,66 @@ const VisaDetails: React.FC = () => {
         </div>
 
         <div className="bg-white dark:bg-slate-800 rounded-3xl p-8 shadow-xl border border-slate-200 dark:border-slate-700 flex flex-col md:flex-row justify-between items-center gap-6 relative overflow-hidden">
-            <div className="absolute top-0 right-0 -mt-20 -mr-20 w-80 h-80 bg-indigo-50 dark:bg-indigo-900/20 rounded-full blur-3xl pointer-events-none"></div>
-            <div className="relative z-10 text-center md:text-left">
-                <h1 className="text-3xl font-black text-slate-900 dark:text-white mb-2 uppercase tracking-tighter tracking-tight">Requirement Dossier</h1>
-                <p className="text-slate-500 font-bold flex items-center justify-center md:justify-start gap-2">
-                    {detailsState.originName} <span className="text-indigo-500">➝</span> {detailsState.destinationName}
-                </p>
-            </div>
-            <div className="relative z-10 grid grid-cols-2 gap-4">
-               <div className="bg-emerald-50 dark:bg-emerald-900/40 p-4 rounded-2xl border border-emerald-100 dark:border-emerald-800/50 min-w-[140px]">
-                    <p className="text-[10px] font-black uppercase text-emerald-400">Cost</p>
-                    <p className="font-bold text-slate-900 dark:text-white">{visaDetails.cost}</p>
-               </div>
-            </div>
+          <div className="absolute top-0 right-0 -mt-20 -mr-20 w-80 h-80 bg-indigo-50 dark:bg-indigo-900/20 rounded-full blur-3xl pointer-events-none"></div>
+          <div className="relative z-10 text-center md:text-left">
+            <h1 className="text-3xl font-black text-slate-900 dark:text-white mb-2 uppercase tracking-tighter tracking-tight">Requirement Dossier</h1>
+            <p className="text-slate-500 font-bold flex items-center justify-center md:justify-start gap-2">
+              {detailsState.originName} <span className="text-indigo-500">➝</span> {detailsState.destinationName}
+            </p>
+          </div>
         </div>
+
+        {/* E-Visa Special Header Notification */}
+        {isEVisa && (
+          <div className="bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-700 rounded-3xl p-10 text-white shadow-2xl overflow-hidden relative group">
+            <div className="absolute top-0 right-0 -mt-8 -mr-8 w-40 h-40 bg-white/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
+            <div className="absolute bottom-0 left-0 -mb-12 -ml-12 w-32 h-32 bg-purple-400/20 rounded-full blur-3xl"></div>
+            <div className="relative z-10 space-y-6">
+              <div className="flex items-start gap-5">
+                <div className="bg-white/20 p-4 rounded-2xl backdrop-blur-sm shrink-0">
+                  <ShieldAlert className="h-10 w-10 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-2xl md:text-3xl font-black tracking-tight leading-tight">We Handle Everything for You</h3>
+                  <p className="text-indigo-200 font-bold mt-1 text-lg">Complete E-Visa Processing Support — Start to Finish</p>
+                </div>
+              </div>
+
+              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/10">
+                <p className="text-indigo-100 font-bold text-base leading-relaxed italic">
+                  "Avoid online mistakes — let our experts file your E-Visa properly."
+                </p>
+              </div>
+
+              <div className="bg-red-500/20 backdrop-blur-sm rounded-2xl p-6 border border-red-400/20">
+                <h4 className="text-xl font-black tracking-tight flex items-center gap-2">
+                  <Info className="h-5 w-5" />
+                  E-VISA? Don't Take Risks Online
+                </h4>
+                <p className="text-indigo-100 font-bold mt-2 leading-relaxed">
+                  We handle your complete E-Visa application — document verification, correct form filling & submission support.
+                </p>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-4">
+                <button
+                  onClick={() => navigate('/query', { state: { destination: countryData.name } })}
+                  className="bg-white text-indigo-600 px-8 py-4 rounded-2xl font-black hover:bg-indigo-50 transition-all flex items-center gap-3 shadow-xl hover:-translate-y-1 justify-center"
+                >
+                  Contact Our Experts
+                  <ExternalLink className="h-5 w-5" />
+                </button>
+                <a
+                  href="tel:9845057744"
+                  className="bg-emerald-500 text-white px-8 py-4 rounded-2xl font-black hover:bg-emerald-400 transition-all flex items-center gap-3 shadow-xl shadow-emerald-500/30 hover:-translate-y-1 justify-center"
+                >
+                  <Phone className="h-5 w-5" />
+                  98450 57744
+                </a>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Dynamic Tab Switcher */}
         <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
@@ -127,11 +206,10 @@ const VisaDetails: React.FC = () => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-6 py-5 font-black text-sm transition-all whitespace-nowrap border-b-4 ${
-                  activeTab === tab.id 
-                    ? 'border-indigo-600 text-indigo-600 bg-indigo-50/50 dark:bg-indigo-900/20' 
-                    : 'border-transparent text-slate-400 hover:text-slate-600'
-                }`}
+                className={`flex items-center gap-2 px-6 py-5 font-black text-sm transition-all whitespace-nowrap border-b-4 ${activeTab === tab.id
+                  ? 'border-indigo-600 text-indigo-600 bg-indigo-50/50 dark:bg-indigo-900/20'
+                  : 'border-transparent text-slate-400 hover:text-slate-600'
+                  }`}
               >
                 <tab.icon className="h-4 w-4" />
                 {tab.label}
@@ -147,18 +225,16 @@ const VisaDetails: React.FC = () => {
                     <ClipboardList className="h-6 w-6 text-indigo-600" />
                     Primary Documentation Protocol
                   </h2>
-                  <a href={GLOBAL_DRIVE_URL} target="_blank" className="hidden sm:flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-lg shadow-indigo-500/20 hover:bg-indigo-500 transition-all">
-                    <Download className="h-4 w-4" />
-                    Download PDF Dossier
-                  </a>
+
+
                 </div>
                 <div className="grid gap-4">
                   {visaDetails.requirements.map((req, i) => (
-                    <div key={i} className="flex gap-4 p-5 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 group hover:border-indigo-500 transition-colors">
-                      <div className="h-8 w-8 rounded-full bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 flex items-center justify-center shrink-0 font-bold text-xs group-hover:scale-110 transition-transform">
-                        {i + 1}
+                    <div key={i} className="flex gap-4 py-2 border-b border-slate-100 dark:border-slate-800 last:border-0 group">
+                      <div className="text-indigo-600 font-black text-sm shrink-0 mt-1">
+                        {i + 1}.
                       </div>
-                      <p className="text-slate-700 dark:text-slate-300 font-semibold leading-relaxed">{req}</p>
+                      <p className="text-slate-700 dark:text-slate-300 font-medium leading-relaxed">{req}</p>
                     </div>
                   ))}
                 </div>
@@ -196,12 +272,12 @@ const VisaDetails: React.FC = () => {
                     </div>
                     <h2 className="text-2xl font-black tracking-tight">Biometric Photo Specifications</h2>
                   </div>
-                  
+
                   <div className="bg-slate-50 dark:bg-slate-900/50 p-8 sm:p-12 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-inner space-y-8">
                     <p className="text-slate-700 dark:text-slate-300 font-bold text-xl leading-relaxed italic border-l-4 border-indigo-500 pl-6">
                       "{visaDetails.photoSpecs || 'Standard passport photo requirements apply.'}"
                     </p>
-                    
+
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-4">
                       <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
                         <p className="text-[10px] font-black uppercase text-indigo-500 tracking-widest mb-1">Dimensions</p>
@@ -215,19 +291,14 @@ const VisaDetails: React.FC = () => {
                       </div>
                     </div>
 
-                    <div className="flex flex-col sm:flex-row items-center justify-between gap-6 pt-6 border-t border-slate-200 dark:border-slate-800">
-                      <div className="text-slate-500 text-sm font-bold flex items-center gap-2">
-                        <Info className="h-4 w-4 text-indigo-500" />
-                        Photos must not be older than 6 months.
-                      </div>
-                      <a href={GLOBAL_DRIVE_URL} target="_blank" className="w-full sm:w-auto inline-flex items-center justify-center gap-3 bg-indigo-600 text-white px-8 py-4 rounded-xl font-black text-sm shadow-xl shadow-indigo-500/20 hover:bg-indigo-500 transition-all hover:scale-105 active:scale-95">
-                        <Download className="h-5 w-5" />
-                        Download Optical Guide PDF
-                      </a>
+                    <div className="text-slate-500 text-sm font-bold flex items-center gap-2">
+                      <Info className="h-4 w-4 text-indigo-500" />
+                      Photos must not be older than 6 months.
                     </div>
                   </div>
                 </div>
               </div>
+
             )}
 
             {activeTab === 'downloads' && (
@@ -239,7 +310,7 @@ const VisaDetails: React.FC = () => {
                     Verified Protocols
                   </div>
                 </div>
-                
+
                 <div className="grid gap-6">
                   {(visaDetails.downloads || [])
                     .filter((item) => {
@@ -248,73 +319,91 @@ const VisaDetails: React.FC = () => {
                       return !label.includes('vfs') && !url.includes('vfs');
                     })
                     .map((item, i) => {
-                    const isMain = i === 0 && !item.isExternal;
-                    return (
-                      <a 
-                        key={i} 
-                        href={item.url} 
-                        target="_blank" 
-                        rel="noopener"
-                        className={`flex items-center justify-between p-8 rounded-3xl group transition-all border-2 ${
-                          isMain 
-                            ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-100 dark:border-indigo-800/50 hover:bg-indigo-600 hover:text-white hover:border-indigo-600' 
+                      const isMain = i === 0 && !item.isExternal;
+                      return (
+                        <a
+                          key={i}
+                          href={item.url}
+                          target="_blank"
+                          rel="noopener"
+                          className={`flex items-center justify-between p-8 rounded-3xl group transition-all border-2 ${isMain
+                            ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-100 dark:border-indigo-800/50 hover:bg-indigo-600 hover:text-white hover:border-indigo-600'
                             : 'bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 hover:border-indigo-500 hover:shadow-2xl'
-                        } shadow-sm`}
-                      >
-                        <div className="flex items-center gap-6">
-                          <div className={`p-4 rounded-2xl ${
-                            isMain 
-                              ? 'bg-white dark:bg-slate-800 group-hover:bg-white/20' 
+                            } shadow-sm`}
+                        >
+                          <div className="flex items-center gap-6">
+                            <div className={`p-4 rounded-2xl ${isMain
+                              ? 'bg-white dark:bg-slate-800 group-hover:bg-white/20'
                               : 'bg-slate-50 dark:bg-slate-900'
-                          } transition-colors`}>
-                            {item.isExternal ? (
-                              <Globe className={`h-10 w-10 ${isMain ? 'text-indigo-600 group-hover:text-white' : 'text-indigo-600'}`} />
-                            ) : (
-                              <FileText className={`h-10 w-10 ${isMain ? 'text-indigo-600 group-hover:text-white' : 'text-indigo-600'}`} />
-                            )}
+                              } transition-colors`}>
+                              {item.isExternal ? (
+                                <Globe className={`h-10 w-10 ${isMain ? 'text-indigo-600 group-hover:text-white' : 'text-indigo-600'}`} />
+                              ) : (
+                                <FileText className={`h-10 w-10 ${isMain ? 'text-indigo-600 group-hover:text-white' : 'text-indigo-600'}`} />
+                              )}
+                            </div>
+                            <div>
+                              <p className="font-black text-xl tracking-tight">{item.label}</p>
+                              <p className={`text-sm font-bold ${isMain ? 'opacity-60' : 'text-slate-500'}`}>
+                                {item.description || (item.isExternal ? 'Official government portal redirect' : 'Complete step-by-step instruction manual')}
+                              </p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="font-black text-xl tracking-tight">{item.label}</p>
-                            <p className={`text-sm font-bold ${isMain ? 'opacity-60' : 'text-slate-500'}`}>
-                              {item.description || (item.isExternal ? 'Official government portal redirect' : 'Complete step-by-step instruction manual')}
-                            </p>
-                          </div>
-                        </div>
-                        {item.isExternal ? (
-                          <ExternalLink className={`h-8 w-8 ${isMain ? 'opacity-40 group-hover:opacity-100' : 'text-slate-300 group-hover:text-indigo-600'} transition-all`} />
-                        ) : (
-                          <Download className={`h-8 w-8 ${isMain ? 'opacity-40 group-hover:opacity-100' : 'text-slate-300 group-hover:text-indigo-600'} transition-all`} />
-                        )}
-                      </a>
-                    );
-                  })}
+                          {item.isExternal ? (
+                            <ExternalLink className={`h-8 w-8 ${isMain ? 'opacity-40 group-hover:opacity-100' : 'text-slate-300 group-hover:text-indigo-600'} transition-all`} />
+                          ) : (
+                            <Download className={`h-8 w-8 ${isMain ? 'opacity-40 group-hover:opacity-100' : 'text-slate-300 group-hover:text-indigo-600'} transition-all`} />
+                          )}
+                        </a>
+                      );
+                    })}
                 </div>
 
-                {/* Generic fallback items if no specific downloads exist, or extra regulatory declarations */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-                  {[
-                    "Declaration on True & Complete Information",
-                    "Declaration on Health Insurance Protocol",
-                    "Annexure – A (Specific Jurisdictions)",
-                    "Protocol Letter of Authorization"
-                  ].map((doc, i) => (
-                    <a key={i} href={GLOBAL_DRIVE_URL} target="_blank" className="flex items-center gap-5 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 hover:border-indigo-500 transition-all font-black text-sm uppercase tracking-tight text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 group shadow-sm">
-                      <div className="p-3 bg-slate-50 dark:bg-slate-900 rounded-xl group-hover:bg-indigo-600 group-hover:text-white transition-colors">
-                        <FileText className="h-5 w-5" />
-                      </div>
-                      {doc}
-                    </a>
-                  ))}
-                </div>
+                {/* Per-visa-type files */}
+                {!!((visaDetails.files || []).length) && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+                    {(visaDetails.files || []).map((file, i) => (
+                      <a key={`visa-file-${i}`} href={file.url} target="_blank" className="flex items-center gap-5 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 hover:border-indigo-500 transition-all font-black text-sm uppercase tracking-tight text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 group shadow-sm">
+                        <div className="p-3 bg-slate-50 dark:bg-slate-900 rounded-xl group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                          <FileText className="h-5 w-5" />
+                        </div>
+                        {file.name}
+                      </a>
+                    ))}
+                  </div>
+                )}
+
+                {/* Country-level files */}
+                {!!((countryData?.files || []).length) && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+                    {(countryData?.files || []).map((file, i) => (
+                      <a key={`country-file-${i}`} href={file.url} target="_blank" className="flex items-center gap-5 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 hover:border-indigo-500 transition-all font-black text-sm uppercase tracking-tight text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 group shadow-sm">
+                        <div className="p-3 bg-slate-50 dark:bg-slate-900 rounded-xl group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                          <FileText className="h-5 w-5" />
+                        </div>
+                        {file.name}
+                      </a>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
             {activeTab === 'formalities' && (
               <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-                <h2 className="text-xl font-black mb-10 tracking-tight">Mandatory Post-Entry Formalities</h2>
-                <div className="grid gap-6">
-                  {visaDetails.formalities?.map((item, i) => (
-                    <div key={i} className="p-8 bg-slate-50 dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 font-bold text-lg text-slate-700 dark:text-slate-300 leading-relaxed shadow-sm">
+                <h2 className="text-3xl font-black mb-2 tracking-tight">FORMALITIES</h2>
+                <h3 className="text-xl font-bold mb-8 text-indigo-600">Professional Assurance Lines</h3>
+                <div className="grid gap-4">
+                  {[
+                    'From our side, your file will be prepared with complete accuracy and embassy-ready standards.',
+                    'We follow a strict document verification process to maximize your approval chances.',
+                    'Your application will be handled by experienced visa documentation specialists.',
+                    'We submit only well-reviewed and properly structured visa files.',
+                    'We guide you step-by-step to avoid common rejection mistakes.',
+                    'We don’t take shortcuts — we build strong, genuine applications.'
+                  ].map((item, i) => (
+                    <div key={i} className="flex gap-4 p-6 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 font-bold text-lg text-slate-700 dark:text-slate-300 leading-relaxed shadow-sm group hover:scale-[1.02] transition-transform">
+                      <div className="bg-indigo-600 w-2 h-2 rounded-full mt-3 shrink-0"></div>
                       {item}
                     </div>
                   ))}
@@ -326,26 +415,35 @@ const VisaDetails: React.FC = () => {
 
         {/* Global CTA */}
         <div className="bg-slate-900 dark:bg-indigo-950 rounded-[3rem] p-12 md:p-20 text-white shadow-2xl relative overflow-hidden border border-slate-800 dark:border-indigo-900 group">
-           <div className="absolute top-0 right-0 -mt-24 -mr-24 w-96 h-96 bg-indigo-500/20 rounded-full blur-[120px] transition-all group-hover:bg-indigo-500/30"></div>
-           <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-16 text-center md:text-left">
-              <div className="max-w-2xl">
-                 <h2 className="text-4xl md:text-5xl font-black mb-6 tracking-tighter">Need Profile Review?</h2>
-                 <p className="text-indigo-200 text-xl font-bold leading-relaxed">
-                   If your documentation is non-standard or you require executive consular handling, our experts at <span className="text-white">Flyconnect</span> are ready to initialize a custom submission protocol.
-                 </p>
-              </div>
-              <button 
-                onClick={() => navigate('/query', { state: { destination: countryData.name } })} 
-                className="shrink-0 flex items-center gap-4 bg-white text-indigo-600 px-12 py-6 rounded-2xl font-black text-xl shadow-2xl hover:bg-indigo-50 transition-all hover:scale-105 active:scale-95 group/btn"
+          <div className="absolute top-0 right-0 -mt-24 -mr-24 w-96 h-96 bg-indigo-500/20 rounded-full blur-[120px] transition-all group-hover:bg-indigo-500/30"></div>
+          <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-16 text-center md:text-left">
+            <div className="max-w-2xl">
+              <h2 className="text-4xl md:text-5xl font-black mb-6 tracking-tighter">Need Profile Review?</h2>
+              <p className="text-indigo-200 text-xl font-bold leading-relaxed">
+                If your documentation is non-standard or you require executive consular handling, our experts at <span className="text-white">Flyconnect</span> are ready to initialize a custom submission protocol.
+              </p>
+            </div>
+            <div className="flex flex-col gap-4 shrink-0">
+              <button
+                onClick={() => navigate('/query', { state: { destination: countryData.name } })}
+                className="flex items-center gap-4 bg-white text-indigo-600 px-12 py-6 rounded-2xl font-black text-xl shadow-2xl hover:bg-indigo-50 transition-all hover:scale-105 active:scale-95 group/btn"
               >
-                 <MessageSquareText className="h-7 w-7 transition-transform group-hover/btn:rotate-12" />
-                 Initialize Support
+                <MessageSquareText className="h-7 w-7 transition-transform group-hover/btn:rotate-12" />
+                Initialize Support
               </button>
-           </div>
+              <a
+                href="tel:9845057744"
+                className="flex items-center justify-center gap-3 bg-emerald-500 text-white px-12 py-5 rounded-2xl font-black text-lg shadow-xl shadow-emerald-500/30 hover:bg-emerald-400 transition-all hover:scale-105 active:scale-95"
+              >
+                <Phone className="h-6 w-6" />
+                98450 57744
+              </a>
+            </div>
+          </div>
         </div>
-      </div>
+      </div >
       <div className="pb-32"></div>
-    </div>
+    </div >
   );
 };
 

@@ -1,7 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Send, Mail, User, Phone, Globe, CheckCircle2, X } from 'lucide-react';
+import { Send, Mail, User, Phone, Globe, CheckCircle2, X, Loader2 } from 'lucide-react';
+import emailjs from 'emailjs-com';
 import { QueryFormData } from '../types';
 import SEO from '../components/SEO';
 
@@ -14,6 +15,8 @@ const Query: React.FC = () => {
     destination: '',
   });
   const [showSuccess, setShowSuccess] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  const [errorVisible, setErrorVisible] = useState(false);
 
   useEffect(() => {
     if (location.state && (location.state as any).destination) {
@@ -33,7 +36,41 @@ const Query: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setShowSuccess(true);
+    setIsSending(true);
+    setErrorVisible(false);
+
+    const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID;
+    const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
+    const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
+
+    if (!serviceId || !templateId || !publicKey) {
+      console.error("EmailJS credentials not found in environment variables");
+      setErrorVisible(true);
+      setIsSending(false);
+      return;
+    }
+
+    const templateParams = {
+      name: formData.name,
+      contact: formData.contact,
+      email: formData.email,
+      destination: formData.destination,
+      message: `New query from ${formData.name} regarding visa to ${formData.destination}. Contact: ${formData.contact}, Email: ${formData.email}`
+    };
+
+    console.log(serviceId, templateId, publicKey)
+    emailjs.send(serviceId, templateId, templateParams, publicKey)
+      .then((response) => {
+        console.log('SUCCESS!', response.status, response.text);
+        setShowSuccess(true);
+      })
+      .catch((err) => {
+        console.error('FAILED...', err);
+        setErrorVisible(true);
+      })
+      .finally(() => {
+        setIsSending(false);
+      });
   };
 
   const handleCloseSuccess = () => {
@@ -43,11 +80,11 @@ const Query: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 py-12 px-4 sm:px-6 lg:px-8 flex items-center justify-center transition-colors duration-300 relative overflow-hidden">
-      <SEO 
-        title="Contact Visa Support - Global Visa Portal" 
+      <SEO
+        title="Contact Visa Support - Global Visa Portal"
         description="Have a specific question about your visa application? Contact our expert support team for personalized assistance with travel documentation to your destination."
       />
-      
+
       {/* Subtle Background Glows */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-3xl h-full bg-gradient-to-b from-indigo-500/5 via-transparent to-transparent pointer-events-none" />
       <div className="absolute -top-24 -right-24 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
@@ -55,7 +92,7 @@ const Query: React.FC = () => {
 
       <div className="max-w-xl w-full relative z-10">
         <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl p-8 sm:p-12 rounded-3xl shadow-2xl border border-slate-100 dark:border-slate-800 transition-all duration-300 hover:shadow-indigo-500/10">
-          
+
           <div className="text-left mb-10">
             <h2 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
               Submit Your Query
@@ -64,9 +101,9 @@ const Query: React.FC = () => {
               Our specialists will review your details and get back to you with a tailored assessment.
             </p>
           </div>
-          
+
           <form className="space-y-7" onSubmit={handleSubmit}>
-            
+
             {/* Full Name Input */}
             <div className="relative group">
               <User className="absolute left-0 bottom-4 h-5 w-5 text-slate-300 dark:text-slate-600 transition-colors duration-300 group-focus-within:text-indigo-600 dark:group-focus-within:text-indigo-400" />
@@ -154,14 +191,29 @@ const Query: React.FC = () => {
             <div className="pt-6">
               <button
                 type="submit"
-                className="group w-full flex justify-center py-5 px-6 border border-transparent text-lg font-black rounded-2xl text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/20 transition-all duration-300 shadow-xl shadow-indigo-500/30 hover:shadow-indigo-500/50 hover:-translate-y-1"
+                disabled={isSending}
+                className="group w-full flex justify-center py-5 px-6 border border-transparent text-lg font-black rounded-2xl text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/20 transition-all duration-300 shadow-xl shadow-indigo-500/30 hover:shadow-indigo-500/50 hover:-translate-y-1 disabled:opacity-70 disabled:hover:translate-y-0"
               >
                 <div className="flex items-center gap-3">
-                  <span>Send Query</span>
-                  <Send className="h-5 w-5 text-indigo-100 group-hover:translate-x-1 transition-transform" />
+                  {isSending ? (
+                    <>
+                      <span>Sending...</span>
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                    </>
+                  ) : (
+                    <>
+                      <span>Send Query</span>
+                      <Send className="h-5 w-5 text-indigo-100 group-hover:translate-x-1 transition-transform" />
+                    </>
+                  )}
                 </div>
               </button>
             </div>
+            {errorVisible && (
+              <p className="mt-4 text-center text-red-500 font-bold animate-pulse">
+                Something went wrong. Please try again later.
+              </p>
+            )}
           </form>
         </div>
       </div>
