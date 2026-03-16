@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useCountries } from '../hooks/useCountries';
 import { VisaType, CountryData } from '../types';
-import { ChevronDown, Plane, Briefcase, GraduationCap, ArrowRight, MapPin, Globe, Clock, Newspaper, ShieldAlert } from 'lucide-react';
+import { ChevronDown, Plane, Briefcase, GraduationCap, ArrowRight, MapPin, Globe, Clock, Newspaper, ShieldAlert, Search, X } from 'lucide-react';
 import SEO from '../components/SEO';
 
 const Service: React.FC = () => {
@@ -21,6 +21,7 @@ const Service: React.FC = () => {
 
   // Modal State
   const [activeModal, setActiveModal] = useState<'origin' | 'destination' | 'type' | null>(null);
+  const [searchQuery, setSearchQuery] = useState<string>('');
 
   // Update default origin name when data loads
   useEffect(() => {
@@ -56,6 +57,15 @@ const Service: React.FC = () => {
     setVisaType(type);
     setActiveModal(null);
   };
+
+  const closeCountryModal = () => {
+    setActiveModal(null);
+    setSearchQuery('');
+  };
+
+  const filteredCountries = Object.entries(countriesData).filter(([_, country]) =>
+    (country as CountryData).name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const handleSubmit = () => {
     if (origin && destination && visaType) {
@@ -182,15 +192,48 @@ const Service: React.FC = () => {
               <h3 className="font-bold text-lg text-slate-800 dark:text-white">
                 Select {activeModal === 'origin' ? 'Origin' : 'Destination'}
               </h3>
-              <button onClick={() => setActiveModal(null)} className="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 transition-colors">
-                Close
+              <button onClick={closeCountryModal} className="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 transition-colors">
+                <X className="h-5 w-5" />
               </button>
             </div>
+
+            {/* Search Input */}
+            <div className="p-4 border-b border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800">
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Search className="h-5 w-5 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
+                </div>
+                <input
+                  type="text"
+                  placeholder={`Search ${activeModal === 'origin' ? 'origin' : 'destination'}...`}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="block w-full pl-10 pr-3 py-3 border border-slate-200 dark:border-slate-600 rounded-xl leading-5 bg-slate-50 dark:bg-slate-700/50 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 dark:focus:border-indigo-400 sm:text-sm transition-all shadow-inner"
+                  autoFocus
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+            </div>
+
             <div className="overflow-y-auto p-2 no-scrollbar bg-white dark:bg-slate-800">
               {countriesLoading ? (
                 <div className="p-8 text-center text-slate-500">Loading countries...</div>
+              ) : filteredCountries.length === 0 ? (
+                <div className="p-8 text-center text-slate-500 dark:text-slate-400">
+                  <div className="mb-2 flex justify-center">
+                    <Search className="h-10 w-10 opacity-20" />
+                  </div>
+                  No countries found matching "{searchQuery}"
+                </div>
               ) : (
-                Object.entries(countriesData).map(([key, country]) => (
+                filteredCountries.map(([key, country]) => (
                   <button
                     key={key}
                     disabled={activeModal === 'destination' && key === origin}

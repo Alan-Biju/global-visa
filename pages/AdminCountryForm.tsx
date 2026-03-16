@@ -12,6 +12,13 @@ const DEFAULT_FORMALITIES = [
     'Carry printed visa approval and travel documents at all times'
 ];
 
+const DEFAULT_EVISA_REQUIREMENTS = [
+    'Clear Passport copy',
+    'Photo (35x45mm 80%face coverage with white background)',
+    'Ticket Itinerary',
+    'Hotel confirmation'
+];
+
 const DEFAULT_VISA_DETAILS: VisaCategoryDetails = {
     description: '',
     requirements: [''],
@@ -45,9 +52,13 @@ const AdminCountryForm: React.FC = () => {
             alert("This visa type already exists for this country.");
             return;
         }
+        const isEVisa = /e[- ]?visa/i.test(selectedVisaType);
         setVisaData({
             ...visaData,
-            [selectedVisaType]: { ...DEFAULT_VISA_DETAILS }
+            [selectedVisaType]: {
+                ...DEFAULT_VISA_DETAILS,
+                requirements: isEVisa ? [...DEFAULT_EVISA_REQUIREMENTS] : [...DEFAULT_VISA_DETAILS.requirements]
+            }
         });
         setSelectedVisaType('');
     };

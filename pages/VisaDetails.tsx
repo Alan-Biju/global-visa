@@ -11,6 +11,13 @@ import {
 } from 'lucide-react';
 import SEO from '../components/SEO';
 
+const DEFAULT_EVISA_REQUIREMENTS = [
+  'Clear Passport copy',
+  'Photo (35x45mm 80%face coverage with white background)',
+  'Ticket Itinerary',
+  'Hotel confirmation'
+];
+
 const VisaDetails: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -59,8 +66,7 @@ const VisaDetails: React.FC = () => {
 
   const isEVisa = useMemo(() => {
     if (!detailsState) return false;
-    const type = detailsState.visaType.toLowerCase();
-    return type.includes('e-visa') || type.includes('e visa');
+    return /e[- ]?visa/i.test(detailsState.visaType);
   }, [detailsState]);
 
   const tabs = useMemo(() => {
@@ -71,17 +77,8 @@ const VisaDetails: React.FC = () => {
       { id: 'formalities', label: 'Formalities', icon: Info },
     ] as const;
 
-    if (isEVisa) {
-      return baseTabs.filter(t => t.id !== 'requirements');
-    }
     return baseTabs;
-  }, [isEVisa]);
-
-  useEffect(() => {
-    if (isEVisa && activeTab === 'requirements') {
-      setActiveTab('photos');
-    }
-  }, [isEVisa, activeTab]);
+  }, []);
 
   if (countriesLoading) {
     return (
@@ -140,10 +137,18 @@ const VisaDetails: React.FC = () => {
         <div className="bg-white dark:bg-slate-800 rounded-3xl p-8 shadow-xl border border-slate-200 dark:border-slate-700 flex flex-col md:flex-row justify-between items-center gap-6 relative overflow-hidden">
           <div className="absolute top-0 right-0 -mt-20 -mr-20 w-80 h-80 bg-indigo-50 dark:bg-indigo-900/20 rounded-full blur-3xl pointer-events-none"></div>
           <div className="relative z-10 text-center md:text-left">
-            <h1 className="text-3xl font-black text-slate-900 dark:text-white mb-2 uppercase tracking-tighter tracking-tight">Requirement Dossier</h1>
-            <p className="text-slate-500 font-bold flex items-center justify-center md:justify-start gap-2">
+            <h1 className="text-3xl font-black text-slate-900 dark:text-white mb-2 uppercase tracking-tighter">Requirement Dossier</h1>
+            <p className="text-slate-500 font-bold flex items-center justify-center md:justify-start gap-2 mb-4">
               {detailsState.originName} <span className="text-indigo-500">➝</span> {detailsState.destinationName}
             </p>
+            {visaDetails.description && (
+              <div className="flex items-start gap-2 max-w-2xl mt-1">
+                <Info className="h-4 w-4 text-slate-400 mt-0.5 shrink-0" />
+                <p className="text-slate-500 dark:text-slate-400 font-medium text-sm leading-relaxed">
+                  {visaDetails.description}
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
@@ -229,14 +234,20 @@ const VisaDetails: React.FC = () => {
 
                 </div>
                 <div className="grid gap-4">
-                  {visaDetails.requirements.map((req, i) => (
-                    <div key={i} className="flex gap-4 py-2 border-b border-slate-100 dark:border-slate-800 last:border-0 group">
-                      <div className="text-indigo-600 font-black text-sm shrink-0 mt-1">
-                        {i + 1}.
+                  {(() => {
+                    const reqs = visaDetails.requirements || [];
+                    const isEmpty = reqs.length === 0 || (reqs.length === 1 && reqs[0].trim() === '');
+                    const displayReqs = isEmpty ? DEFAULT_EVISA_REQUIREMENTS : reqs;
+
+                    return displayReqs.map((req, i) => (
+                      <div key={i} className="flex gap-4 py-2 border-b border-slate-100 dark:border-slate-800 last:border-0 group">
+                        <div className="text-indigo-600 font-black text-sm shrink-0 mt-1">
+                          {i + 1}.
+                        </div>
+                        <p className="text-slate-700 dark:text-slate-300 font-medium leading-relaxed">{req}</p>
                       </div>
-                      <p className="text-slate-700 dark:text-slate-300 font-medium leading-relaxed">{req}</p>
-                    </div>
-                  ))}
+                    ));
+                  })()}
                 </div>
 
                 {!!(visaDetails.checklists || []).length && (
@@ -424,13 +435,6 @@ const VisaDetails: React.FC = () => {
               </p>
             </div>
             <div className="flex flex-col gap-4 shrink-0">
-              <button
-                onClick={() => navigate('/query', { state: { destination: countryData.name } })}
-                className="flex items-center gap-4 bg-white text-indigo-600 px-12 py-6 rounded-2xl font-black text-xl shadow-2xl hover:bg-indigo-50 transition-all hover:scale-105 active:scale-95 group/btn"
-              >
-                <MessageSquareText className="h-7 w-7 transition-transform group-hover/btn:rotate-12" />
-                Initialize Support
-              </button>
               <a
                 href="tel:9845057744"
                 className="flex items-center justify-center gap-3 bg-emerald-500 text-white px-12 py-5 rounded-2xl font-black text-lg shadow-xl shadow-emerald-500/30 hover:bg-emerald-400 transition-all hover:scale-105 active:scale-95"
